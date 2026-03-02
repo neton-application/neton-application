@@ -1,0 +1,16 @@
+package controller.admin.user.dto
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class UserVO(
+    val id: Long,
+    val username: String,
+    val nickname: String,
+    val email: String? = null,
+    val mobile: String? = null,
+    val avatar: String? = null,
+    val status: Int,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
+)
