@@ -1,212 +1,212 @@
 # Neton Application
 
-基于 [Neton](../neton) 框架构建的企业级后台管理系统，采用 Kotlin/Native 编译为原生二进制，启动快、内存低、单文件部署。
+An enterprise-grade admin system built on the [Neton](../neton) framework, compiled to native binaries via Kotlin/Native — fast startup, low memory footprint, single-file deployment.
 
-## 技术栈
+## Tech Stack
 
-| 项目 | 选型 |
-|------|------|
-| 语言 | Kotlin 2.3 (Multiplatform) |
-| 框架 | Neton 1.0.0-beta1 |
-| 编译 | Kotlin/Native → 原生二进制 |
-| 数据库 | MySQL / PostgreSQL / SQLite |
-| 认证 | JWT |
-| 构建 | Gradle 8.14 + KSP |
-| 日志 | 结构化 JSON，异步写入 |
+| Component | Choice |
+|-----------|--------|
+| Language | Kotlin 2.3 (Multiplatform) |
+| Framework | Neton 1.0.0-beta1 |
+| Compilation | Kotlin/Native → Native Binary |
+| Database | MySQL / PostgreSQL / SQLite |
+| Authentication | JWT |
+| Build | Gradle 8.14 + KSP |
+| Logging | Structured JSON, async writes |
 
-**运行指标：**
+**Runtime Metrics:**
 
-- 冷启动 ~150ms（debug）/ ~3ms（release）
-- 内存占用 ~20MB
-- 单文件部署，无 JVM 依赖
+- Cold start ~150ms (debug) / ~3ms (release)
+- Memory usage ~20MB
+- Single-file deployment, no JVM dependency
 
-## 仓库结构
+## Repository Structure
 
-采用**多仓库 + Gradle Composite Build** 架构，主仓库与扩展模块分离：
+Uses a **multi-repo + Gradle Composite Build** architecture with the main repository and extension modules separated:
 
-| 仓库 | 内容 | 引入方式 |
-|------|------|---------|
-| `neton` | 框架 | `includeBuild("../neton")` |
-| `neton-application` | 主应用（module-system + module-infra + application 入口） | 根项目 |
-| `neton-application-module-member` | 会员模块 | `includeBuild` |
-| `neton-application-module-payment` | 支付模块 | `includeBuild` |
-| `neton-application-module-platform` | 开放平台模块 | `includeBuild` |
-| `neton-application-admin` | 管理端前端（Vue3 + Ant Design Vue） | 独立仓库 |
+| Repository | Contents | Inclusion Method |
+|------------|----------|-----------------|
+| `neton` | Framework | `includeBuild("../neton")` |
+| `neton-application` | Main app (module-system + module-infra + application entry) | Root project |
+| `neton-application-module-member` | Member module | `includeBuild` |
+| `neton-application-module-payment` | Payment module | `includeBuild` |
+| `neton-application-module-platform` | Open platform module | `includeBuild` |
+| `neton-application-admin` | Admin frontend (Vue3 + Ant Design Vue) | Standalone repo |
 
-目录布局：
+Directory layout:
 
 ```
 projects/
-├── neton/                              # 框架
-├── neton-application/                  # 主仓库（本项目）
-│   ├── application/                    # 应用入口
+├── neton/                              # Framework
+├── neton-application/                  # Main repo (this project)
+│   ├── application/                    # Application entry
 │   │   ├── src/commonMain/kotlin/
-│   │   │   ├── Main.kt                # 启动入口
-│   │   │   ├── config/                # SecurityConfig 等
-│   │   │   └── controller/            # HomeController（健康检查）
-│   │   └── config/                    # TOML 配置文件
-│   │       ├── application.conf       # 服务器、日志配置
-│   │       ├── database.conf          # 数据库连接
-│   │       └── routing.conf           # 路由组定义
-│   ├── module-system/                  # 系统管理（核心）
-│   ├── module-infra/                   # 基础设施
-│   ├── sql/                            # 主库迁移脚本
+│   │   │   ├── Main.kt                # Startup entry
+│   │   │   ├── config/                # SecurityConfig, etc.
+│   │   │   └── controller/            # HomeController (health check)
+│   │   └── config/                    # TOML config files
+│   │       ├── application.conf       # Server & logging config
+│   │       ├── database.conf          # Database connection
+│   │       └── routing.conf           # Route group definitions
+│   ├── module-system/                  # System management (core)
+│   ├── module-infra/                   # Infrastructure
+│   ├── sql/                            # Main DB migration scripts
 │   │   ├── mysql/
 │   │   ├── postgresql/
 │   │   └── sqlite/
 │   ├── build.gradle.kts
 │   ├── settings.gradle.kts
 │   └── gradle.properties
-├── neton-application-module-member/    # 会员模块（独立仓库）
-├── neton-application-module-payment/   # 支付模块（独立仓库）
-├── neton-application-module-platform/  # 开放平台模块（独立仓库）
-└── neton-application-admin/            # 管理端前端
+├── neton-application-module-member/    # Member module (standalone repo)
+├── neton-application-module-payment/   # Payment module (standalone repo)
+├── neton-application-module-platform/  # Open platform module (standalone repo)
+└── neton-application-admin/            # Admin frontend
 ```
 
-## 架构设计
+## Architecture
 
-### 分层架构
+### Layered Architecture
 
 ```
-Controller  ──  HTTP 路由处理，参数绑定，权限注解
+Controller  ──  HTTP routing, parameter binding, permission annotations
      │
-   Logic    ──  业务逻辑，状态机，事务编排
+   Logic    ──  Business logic, state machines, transaction orchestration
      │
-   Table    ──  数据访问（KSP 自动生成 CRUD）
+   Table    ──  Data access (KSP auto-generated CRUD)
      │
    DB       ──  MySQL / PostgreSQL / SQLite
 ```
 
-### 路由组
+### Route Groups
 
-| 组 | 挂载路径 | 用途 | requireAuth |
-|----|---------|------|-------------|
-| `admin` | `/admin` | 管理后台 API | true |
-| `app` | `/app` | C 端 / 移动端 API | true |
-| `open` | `/platform` | 开放平台 API | 按需 |
+| Group | Mount Path | Purpose | requireAuth |
+|-------|-----------|---------|-------------|
+| `admin` | `/admin` | Admin panel API | true |
+| `app` | `/app` | Consumer / mobile API | true |
+| `open` | `/platform` | Open platform API | As needed |
 
-### 模块依赖关系
+### Module Dependencies
 
 ```
 application
-├── module-system        ← 核心，被所有模块依赖
-├── module-infra         ← 依赖 system
-├── module-member        ← 依赖 system（独立仓库）
-├── module-payment       ← 依赖 system（独立仓库）
-└── module-platform      ← 依赖 system（独立仓库）
+├── module-system        ← Core, depended upon by all modules
+├── module-infra         ← Depends on system
+├── module-member        ← Depends on system (standalone repo)
+├── module-payment       ← Depends on system (standalone repo)
+└── module-platform      ← Depends on system (standalone repo)
 ```
 
-## 功能模块
+## Feature Modules
 
-### module-system — 系统管理
+### module-system — System Management
 
-RBAC 权限体系、认证、组织架构。
+RBAC permission system, authentication, organizational structure.
 
-| 功能 | 说明 |
-|------|------|
-| 认证 | 用户名密码登录、短信登录、社交登录（Google / Telegram）、Token 刷新 |
-| 用户管理 | CRUD、启用/禁用、密码重置、个人资料 |
-| 角色管理 | CRUD、角色分配、菜单权限分配 |
-| 菜单管理 | 树形结构 CRUD |
-| 权限管理 | 细粒度权限查询与分配 |
-| 部门管理 | 树形组织架构 CRUD |
-| 岗位管理 | 岗位 CRUD 与列表 |
-| 字典管理 | 字典类型 + 字典数据 CRUD |
-| 日志 | 登录日志、操作审计日志 |
-| 通知公告 | 系统公告 CRUD |
-| 消息系统 | 消息渠道、消息模板、发送记录、短信/邮件/通知模板 |
-| 社交用户 | 第三方社交账号绑定管理 |
+| Feature | Description |
+|---------|-------------|
+| Authentication | Username/password login, SMS login, social login (Google / Telegram), token refresh |
+| User Management | CRUD, enable/disable, password reset, user profile |
+| Role Management | CRUD, role assignment, menu permission assignment |
+| Menu Management | Tree-structured CRUD |
+| Permission Management | Fine-grained permission query and assignment |
+| Department Management | Tree-structured org hierarchy CRUD |
+| Post Management | Post CRUD and listing |
+| Dictionary Management | Dictionary type + dictionary data CRUD |
+| Logging | Login logs, operation audit logs |
+| Notices | System announcement CRUD |
+| Messaging | Message channels, message templates, send records, SMS/email/notification templates |
+| Social Users | Third-party social account binding management |
 
-### module-infra — 基础设施
+### module-infra — Infrastructure
 
-| 功能 | 说明 |
-|------|------|
-| 动态配置 | Key-Value 配置管理 |
-| 文件管理 | 文件上传、S3 预签名 URL、多存储后端 |
-| 存储配置 | 存储后端 CRUD、连通性测试、默认存储切换 |
-| 定时任务 | Job CRUD、执行日志、Cron 调度 |
-| API 日志 | 访问日志 + 错误日志，请求/响应追踪 |
-| Redis 监控 | Redis 健康检查与统计 |
+| Feature | Description |
+|---------|-------------|
+| Dynamic Config | Key-value configuration management |
+| File Management | File upload, S3 pre-signed URLs, multi-storage backends |
+| Storage Config | Storage backend CRUD, connectivity testing, default storage switching |
+| Scheduled Jobs | Job CRUD, execution logs, cron scheduling |
+| API Logs | Access logs + error logs, request/response tracing |
+| Redis Monitoring | Redis health check and statistics |
 
-### module-member — 会员体系
+### module-member — Membership System
 
-| 功能 | 说明 |
-|------|------|
-| 会员认证 | C 端注册/登录/登出、短信验证、社交注册 |
-| 会员管理 | 会员 CRUD、分组、标签 |
-| 等级体系 | 等级定义、经验值、自动升级 |
-| 积分系统 | 积分发放、积分历史、兑换 |
-| 签到系统 | 每日签到奖励、签到记录、连续签到追踪 |
-| 收货地址 | 地址 CRUD |
+| Feature | Description |
+|---------|-------------|
+| Member Auth | Consumer registration/login/logout, SMS verification, social registration |
+| Member Management | Member CRUD, groups, tags |
+| Level System | Level definition, experience points, auto-upgrade |
+| Points System | Points issuance, points history, redemption |
+| Check-in System | Daily check-in rewards, check-in records, streak tracking |
+| Shipping Addresses | Address CRUD |
 
-### module-payment — 支付系统
+### module-payment — Payment System
 
-| 功能 | 说明 |
-|------|------|
-| 支付应用 | 多应用管理、密钥生成 |
-| 支付渠道 | 多网关接入、渠道配置 |
-| 支付订单 | 下单、状态机流转、订单查询 |
-| 退款 | 退款申请与处理 |
-| 钱包 | 账户钱包、余额变动 |
-| 充值 | 充值套餐、充值记录 |
-| 转账 | 账户间转账 |
-| 异步通知 | 支付回调查询（Webhook 回调端点待实现） |
+| Feature | Description |
+|---------|-------------|
+| Payment Apps | Multi-app management, key generation |
+| Payment Channels | Multi-gateway integration, channel configuration |
+| Payment Orders | Order creation, state machine transitions, order query |
+| Refunds | Refund application and processing |
+| Wallet | Account wallet, balance transactions |
+| Top-up | Top-up packages, top-up records |
+| Transfers | Account-to-account transfers |
+| Async Notifications | Payment callback query (webhook endpoint TBD) |
 
-### module-platform — 开放平台
+### module-platform — Open Platform
 
-| 功能 | 说明 |
-|------|------|
-| 客户端管理 | 第三方客户端注册、AppID/Secret 生成 |
-| API 目录 | API 定义、授权策略、定价配置 |
-| 签名验证 | HMAC 请求签名与校验 |
-| 计费统计 | API 调用计费、用量统计、账单记录 |
+| Feature | Description |
+|---------|-------------|
+| Client Management | Third-party client registration, AppID/Secret generation |
+| API Catalog | API definitions, authorization policies, pricing configuration |
+| Signature Verification | HMAC request signing and verification |
+| Billing & Statistics | API call billing, usage statistics, billing records |
 
-## 快速开始
+## Quick Start
 
-### 环境要求
+### Prerequisites
 
-- **JDK 17+**（Gradle 构建需要，运行时不需要）
+- **JDK 17+** (required for Gradle build, not needed at runtime)
 - **Git**
-- **MySQL**（或 PostgreSQL / SQLite）
+- **MySQL** (or PostgreSQL / SQLite)
 
-### 1. 克隆项目
+### 1. Clone the Project
 
 ```bash
 git clone <repository-url>
 cd neton-application
 ```
 
-确保 neton 框架及扩展模块在同级目录：
+Ensure the Neton framework and extension modules are in sibling directories:
 
 ```
 projects/
-├── neton/                              # 框架
-├── neton-application/                  # 本项目
-├── neton-application-module-member/    # 会员模块
-├── neton-application-module-payment/   # 支付模块
-└── neton-application-module-platform/  # 开放平台模块
+├── neton/                              # Framework
+├── neton-application/                  # This project
+├── neton-application-module-member/    # Member module
+├── neton-application-module-payment/   # Payment module
+└── neton-application-module-platform/  # Open platform module
 ```
 
-### 2. 初始化数据库
+### 2. Initialize the Database
 
-每个仓库各自包含 `sql/` 目录，需在**同一数据库**上依次执行。
+Each repository contains its own `sql/` directory. Execute them sequentially against the **same database**.
 
 #### MySQL
 
 ```bash
-# 主库（system + infra）
+# Main DB (system + infra)
 mysql -u root -p neton-application < sql/mysql/V001__create_tables.sql
 mysql -u root -p neton-application < sql/mysql/V002__init_data.sql
 
-# 会员模块
+# Member module
 mysql -u root -p neton-application < ../neton-application-module-member/sql/mysql/V001__create_tables.sql
 mysql -u root -p neton-application < ../neton-application-module-member/sql/mysql/V002__init_data.sql
 
-# 支付模块
+# Payment module
 mysql -u root -p neton-application < ../neton-application-module-payment/sql/mysql/V001__create_tables.sql
 mysql -u root -p neton-application < ../neton-application-module-payment/sql/mysql/V002__init_data.sql
 
-# 开放平台模块
+# Open platform module
 mysql -u root -p neton-application < ../neton-application-module-platform/sql/mysql/V001__create_tables.sql
 mysql -u root -p neton-application < ../neton-application-module-platform/sql/mysql/V002__init_data.sql
 ```
@@ -214,19 +214,19 @@ mysql -u root -p neton-application < ../neton-application-module-platform/sql/my
 #### PostgreSQL
 
 ```bash
-# 主库（system + infra）
+# Main DB (system + infra)
 psql -U postgres -d neton-application -f sql/postgresql/V001__create_tables.sql
 psql -U postgres -d neton-application -f sql/postgresql/V002__init_data.sql
 
-# 会员模块
+# Member module
 psql -U postgres -d neton-application -f ../neton-application-module-member/sql/postgresql/V001__create_tables.sql
 psql -U postgres -d neton-application -f ../neton-application-module-member/sql/postgresql/V002__init_data.sql
 
-# 支付模块
+# Payment module
 psql -U postgres -d neton-application -f ../neton-application-module-payment/sql/postgresql/V001__create_tables.sql
 psql -U postgres -d neton-application -f ../neton-application-module-payment/sql/postgresql/V002__init_data.sql
 
-# 开放平台模块
+# Open platform module
 psql -U postgres -d neton-application -f ../neton-application-module-platform/sql/postgresql/V001__create_tables.sql
 psql -U postgres -d neton-application -f ../neton-application-module-platform/sql/postgresql/V002__init_data.sql
 ```
@@ -236,26 +236,26 @@ psql -U postgres -d neton-application -f ../neton-application-module-platform/sq
 ```bash
 mkdir -p application/data application/logs
 
-# 主库（system + infra）
+# Main DB (system + infra)
 sqlite3 application/data/backend.db < sql/sqlite/V001__create_tables.sql
 sqlite3 application/data/backend.db < sql/sqlite/V002__init_data.sql
 
-# 会员模块
+# Member module
 sqlite3 application/data/backend.db < ../neton-application-module-member/sql/sqlite/V001__create_tables.sql
 sqlite3 application/data/backend.db < ../neton-application-module-member/sql/sqlite/V002__init_data.sql
 
-# 支付模块
+# Payment module
 sqlite3 application/data/backend.db < ../neton-application-module-payment/sql/sqlite/V001__create_tables.sql
 sqlite3 application/data/backend.db < ../neton-application-module-payment/sql/sqlite/V002__init_data.sql
 
-# 开放平台模块
+# Open platform module
 sqlite3 application/data/backend.db < ../neton-application-module-platform/sql/sqlite/V001__create_tables.sql
 sqlite3 application/data/backend.db < ../neton-application-module-platform/sql/sqlite/V002__init_data.sql
 ```
 
-### 3. 配置数据库连接
+### 3. Configure Database Connection
 
-编辑 `application/config/database.conf`，按实际数据库类型配置：
+Edit `application/config/database.conf` for your database:
 
 ```toml
 # MySQL
@@ -274,7 +274,7 @@ uri = "mysql://root:123456@localhost:3306/neton-application"
 # uri = "sqlite://data/backend.db"
 ```
 
-### 4. 编译
+### 4. Build
 
 ```bash
 # macOS ARM64 (Apple Silicon)
@@ -290,18 +290,18 @@ uri = "mysql://root:123456@localhost:3306/neton-application"
 ./gradlew :application:linkDebugExecutableLinuxArm64
 ```
 
-> 首次编译需下载 Kotlin/Native 工具链，耗时较长。后续增量编译较快。
+> The first build downloads the Kotlin/Native toolchain, which takes longer. Subsequent incremental builds are faster.
 
-### 5. 运行
+### 5. Run
 
-**必须从 `application` 目录启动**，以正确加载配置：
+**Must be launched from the `application` directory** to correctly load configuration:
 
 ```bash
 cd application
 ./build/bin/macosArm64/debugExecutable/application.kexe
 ```
 
-输出：
+Output:
 
 ```
 ░█▀█░█▀▀░▀█▀░█▀█░█▀█
@@ -319,14 +319,14 @@ Cold Start  : 154 ms
 Ready → http://localhost:8080
 ```
 
-### 6. 验证
+### 6. Verify
 
 ```bash
 curl http://localhost:8080/
 # {"status":"ok","service":"neton-application","version":"1.0.0"}
 ```
 
-## 配置说明
+## Configuration
 
 ### application.conf
 
@@ -397,33 +397,33 @@ group = "open"
 mount = "/platform"
 ```
 
-### 环境覆盖
+### Environment Overrides
 
-支持按环境加载不同配置：
+Supports loading environment-specific configuration:
 
 ```bash
-# 开发环境（默认）
+# Development (default)
 ./application.kexe
 
-# 生产环境 → 加载 application.prod.conf 覆盖
+# Production → loads application.prod.conf as override
 ./application.kexe --env=prod
 ```
 
-配置优先级：CLI 参数 > 环境变量 > 环境配置文件 > 基础配置文件 > 框架默认值
+Configuration priority: CLI args > Environment variables > Environment config file > Base config file > Framework defaults
 
-## 编译目标
+## Build Targets
 
-| 平台 | Target | 产物路径 |
-|------|--------|---------|
+| Platform | Target | Output Path |
+|----------|--------|-------------|
 | macOS ARM64 | `macosArm64` | `application/build/bin/macosArm64/debugExecutable/` |
 | macOS x64 | `macosX64` | `application/build/bin/macosX64/debugExecutable/` |
 | Linux x64 | `linuxX64` | `application/build/bin/linuxX64/debugExecutable/` |
 | Linux ARM64 | `linuxArm64` | `application/build/bin/linuxArm64/debugExecutable/` |
 | Windows x64 | `mingwX64` | `application/build/bin/mingwX64/debugExecutable/` |
 
-Release 构建：将 `linkDebugExecutable` 替换为 `linkReleaseExecutable`。
+For release builds: replace `linkDebugExecutable` with `linkReleaseExecutable`.
 
-## 容器化部署
+## Container Deployment
 
 ```dockerfile
 FROM scratch
@@ -434,14 +434,14 @@ ENTRYPOINT ["/app", "--env=prod"]
 ```
 
 ```bash
-# 构建镜像（约 10MB）
+# Build image (~10MB)
 docker build -t neton-application .
 docker run -p 8080:8080 neton-application
 ```
 
-## 开发指南
+## Development Guide
 
-### 添加新 Controller
+### Adding a New Controller
 
 ```kotlin
 // module-system/src/commonMain/kotlin/controller/admin/example/ExampleController.kt
@@ -465,9 +465,9 @@ class ExampleController(private val logic: ExampleLogic) {
 }
 ```
 
-KSP 自动生成路由注册代码，无需手动配置路由。
+KSP auto-generates route registration code — no manual route configuration needed.
 
-### 添加新 Model + Table
+### Adding a New Model + Table
 
 ```kotlin
 // model/Example.kt
@@ -482,33 +482,33 @@ data class Example(
     @UpdatedAt val updatedAt: String? = null
 )
 
-// table/ExampleTable.kt（Facade，可添加自定义方法）
+// table/ExampleTable.kt (Facade, add custom methods here)
 object ExampleTable : Table<Example, Long> by ExampleTableImpl
 ```
 
-KSP 自动生成 `ExampleTableImpl`、`ExampleMeta`、`ExampleRowMapper` 等 6 个文件。
+KSP auto-generates `ExampleTableImpl`, `ExampleMeta`, `ExampleRowMapper`, and 3 other files.
 
-### 项目构建命令
+### Build Commands
 
 ```bash
-# 仅编译（不链接）
+# Compile only (no linking)
 ./gradlew :application:compileKotlinMacosArm64
 
-# 编译 + 链接
+# Compile + link
 ./gradlew :application:linkDebugExecutableMacosArm64
 
-# 清理重建
+# Clean rebuild
 ./gradlew clean :application:linkDebugExecutableMacosArm64
 
-# 单独运行 KSP 代码生成
+# Run KSP code generation only
 ./gradlew :module-system:kspKotlinMacosArm64
 ```
 
-## 相关文档
+## Related Documentation
 
-| 文档 | 说明 |
-|------|------|
-| **SPEC.md** | 项目架构、API 规范、配置规范 |
+| Document | Description |
+|----------|-------------|
+| **SPEC.md** | Project architecture, API specifications, configuration specs |
 
 ## License
 
