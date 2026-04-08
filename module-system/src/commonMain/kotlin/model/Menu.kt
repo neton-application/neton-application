@@ -19,7 +19,7 @@ data class Menu(
     val component: String? = null,
     val icon: String? = null,
     val sort: Int = 0,
-    val status: Int = 0,
+    val status: Int = 1,
     @CreatedAt
     val createdAt: String? = null,
     @UpdatedAt

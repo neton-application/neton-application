@@ -18,7 +18,7 @@ data class MessageTemplate(
     val params: String? = null,
     val channelId: Long = 0,
     val type: Int = 0,
-    val status: Int = 0,
+    val status: Int = 1,
     val remark: String? = null,
     @SoftDelete
     val deleted: Int = 0,

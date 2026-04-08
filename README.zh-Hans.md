@@ -2,6 +2,10 @@
 
 基于 [Neton](../neton) 框架构建的企业级后台管理系统，采用 Kotlin/Native 编译为原生二进制，启动快、内存低、单文件部署。
 
+> 开发硬规范：见 [ENGINEERING_RULES.md](./ENGINEERING_RULES.md)
+>
+> 模块模板规范：见 [docs/module-template-spec.md](./docs/module-template-spec.md)
+
 ## 技术栈
 
 | 项目 | 选型 |
@@ -477,7 +481,7 @@ data class Example(
     @Id val id: Long = 0,
     val name: String,
     val status: Int = 0,
-    @SoftDelete val deleted: Boolean = false,
+    @SoftDelete val deleted: Int = 0,
     @CreatedAt val createdAt: String? = null,
     @UpdatedAt val updatedAt: String? = null
 )

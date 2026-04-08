@@ -9,7 +9,7 @@ data class MessageChannelVO(
     val code: String,
     val type: String,
     val config: String? = null,
-    val status: Int = 0,
+    val status: Int = 1,
     val remark: String? = null,
     val createdAt: String? = null
 )

@@ -86,7 +86,7 @@ class NotificationTemplateLogic(
             NotificationTemplate::code eq notificationCode
         } ?: throw NotFoundException("Notification template not found: $notificationCode")
 
-        if (notification.status != 0) {
+        if (notification.status == 0) {
             log.warn("Notification template $notificationCode is disabled")
             return false
         }

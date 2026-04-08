@@ -4,12 +4,12 @@
 
 -- 初始化超级管理员用户 (密码: admin123)
 INSERT INTO system_users (id, username, password_hash, nickname, status, created_at, updated_at)
-VALUES (1, 'admin', 'dcf97c4b4415986cad61148a408e87b17968bfe4904cda4d64b5e17064d1a0f8', '超级管理员', 0, 0, 0)
+VALUES (1, 'admin', 'dcf97c4b4415986cad61148a408e87b17968bfe4904cda4d64b5e17064d1a0f8', '超级管理员', 1, 0, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- 初始化超级管理员角色
 INSERT INTO system_roles (id, code, name, description, sort, status, created_at, updated_at)
-VALUES (1, 'super_admin', '超级管理员', '拥有所有权限', 0, 0, 0, 0)
+VALUES (1, 'super_admin', '超级管理员', '拥有所有权限', 0, 1, 0, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- 绑定管理员与角色
@@ -20,7 +20,7 @@ ON CONFLICT (id) DO NOTHING;
 -- =============================================
 -- 初始化菜单数据
 -- type: 1=目录, 2=菜单, 3=按钮
--- status: 0=正常, 1=停用
+-- status: 1=正常, 0=停用
 -- path: 一级目录用绝对路径，子菜单用相对路径（前端自动拼接）
 -- =============================================
 
@@ -410,126 +410,126 @@ ON CONFLICT (id) DO NOTHING;
 -- =============================================
 -- 初始化字典类型数据
 -- =============================================
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (1, '用户性别', 'system_user_sex', 0, '用户性别', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (2, '通用状态', 'common_status', 0, '通用状态', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (3, '菜单类型', 'system_menu_type', 0, '菜单类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (4, '角色类型', 'system_role_type', 0, '角色类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (5, '数据范围', 'system_data_scope', 0, '数据范围', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (6, '公告类型', 'system_notice_type', 0, '公告类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (7, '登录类型', 'system_login_type', 0, '登录日志类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (8, '登录结果', 'system_login_result', 0, '登录结果', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (9, '配置类型', 'infra_config_type', 0, '参数配置类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (10, '布尔类型', 'infra_boolean_string', 0, '布尔类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (11, '操作类型', 'infra_operate_type', 0, '操作类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (12, '用户类型', 'user_type', 0, '用户类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (13, '短信渠道编码', 'system_sms_channel_code', 0, '短信渠道编码', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (14, '短信模板类型', 'system_sms_template_type', 0, '短信模板类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (15, '短信发送状态', 'system_sms_send_status', 0, '短信发送状态', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (16, '短信接收状态', 'system_sms_receive_status', 0, '短信接收状态', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (17, '邮件发送状态', 'system_mail_send_status', 0, '邮件发送状态', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (18, '通知模板类型', 'system_notify_template_type', 0, '通知模板类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (19, '社交类型', 'system_social_type', 0, '社交类型', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (20, '终端', 'terminal', 0, '终端', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (21, '文件存储器', 'infra_file_storage', 0, '文件存储器', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (1, '用户性别', 'system_user_sex', 1, '用户性别', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (2, '通用状态', 'common_status', 1, '通用状态', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (3, '菜单类型', 'system_menu_type', 1, '菜单类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (4, '角色类型', 'system_role_type', 1, '角色类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (5, '数据范围', 'system_data_scope', 1, '数据范围', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (6, '公告类型', 'system_notice_type', 1, '公告类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (7, '登录类型', 'system_login_type', 1, '登录日志类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (8, '登录结果', 'system_login_result', 1, '登录结果', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (9, '配置类型', 'infra_config_type', 1, '参数配置类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (10, '布尔类型', 'infra_boolean_string', 1, '布尔类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (11, '操作类型', 'infra_operate_type', 1, '操作类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (12, '用户类型', 'user_type', 1, '用户类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (13, '短信渠道编码', 'system_sms_channel_code', 1, '短信渠道编码', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (14, '短信模板类型', 'system_sms_template_type', 1, '短信模板类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (15, '短信发送状态', 'system_sms_send_status', 1, '短信发送状态', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (16, '短信接收状态', 'system_sms_receive_status', 1, '短信接收状态', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (17, '邮件发送状态', 'system_mail_send_status', 1, '邮件发送状态', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (18, '通知模板类型', 'system_notify_template_type', 1, '通知模板类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (19, '社交类型', 'system_social_type', 1, '社交类型', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (20, '终端', 'terminal', 1, '终端', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_types (id, name, type, status, remark, created_at, updated_at) VALUES (21, '文件存储器', 'infra_file_storage', 1, '文件存储器', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- =============================================
 -- 初始化字典数据
 -- =============================================
 
 -- 通用状态
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (1, 'common_status', '开启', '0', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (2, 'common_status', '关闭', '1', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (1, 'common_status', '开启', '0', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (2, 'common_status', '关闭', '1', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 用户性别
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (3, 'system_user_sex', '男', '1', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (4, 'system_user_sex', '女', '2', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (5, 'system_user_sex', '未知', '0', 3, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (3, 'system_user_sex', '男', '1', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (4, 'system_user_sex', '女', '2', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (5, 'system_user_sex', '未知', '0', 3, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 菜单类型
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (6, 'system_menu_type', '目录', '1', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (7, 'system_menu_type', '菜单', '2', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (8, 'system_menu_type', '按钮', '3', 3, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (6, 'system_menu_type', '目录', '1', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (7, 'system_menu_type', '菜单', '2', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (8, 'system_menu_type', '按钮', '3', 3, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 角色类型
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (9, 'system_role_type', '内置', '1', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (10, 'system_role_type', '自定义', '2', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (9, 'system_role_type', '内置', '1', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (10, 'system_role_type', '自定义', '2', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 数据范围
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (11, 'system_data_scope', '全部数据权限', '1', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (12, 'system_data_scope', '指定部门数据权限', '2', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (13, 'system_data_scope', '本部门数据权限', '3', 3, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (14, 'system_data_scope', '本部门及以下数据权限', '4', 4, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (15, 'system_data_scope', '仅本人数据权限', '5', 5, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (11, 'system_data_scope', '全部数据权限', '1', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (12, 'system_data_scope', '指定部门数据权限', '2', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (13, 'system_data_scope', '本部门数据权限', '3', 3, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (14, 'system_data_scope', '本部门及以下数据权限', '4', 4, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (15, 'system_data_scope', '仅本人数据权限', '5', 5, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 公告类型
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (16, 'system_notice_type', '通知', '1', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (17, 'system_notice_type', '公告', '2', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (16, 'system_notice_type', '通知', '1', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (17, 'system_notice_type', '公告', '2', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 登录类型
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (18, 'system_login_type', '使用账号登录', '100', 0, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (19, 'system_login_type', '使用社交登录', '101', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (20, 'system_login_type', '使用手机登陆', '103', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (21, 'system_login_type', '使用短信登陆', '104', 3, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (22, 'system_login_type', '自助注册', '200', 10, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (23, 'system_login_type', '管理员创建', '201', 11, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (18, 'system_login_type', '使用账号登录', '100', 0, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (19, 'system_login_type', '使用社交登录', '101', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (20, 'system_login_type', '使用手机登陆', '103', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (21, 'system_login_type', '使用短信登陆', '104', 3, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (22, 'system_login_type', '自助注册', '200', 10, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (23, 'system_login_type', '管理员创建', '201', 11, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 登录结果
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (24, 'system_login_result', '登录成功', '0', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (25, 'system_login_result', '登录失败', '10', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (26, 'system_login_result', '退出成功', '20', 3, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (27, 'system_login_result', '退出失败', '30', 4, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (24, 'system_login_result', '登录成功', '0', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (25, 'system_login_result', '登录失败', '10', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (26, 'system_login_result', '退出成功', '20', 3, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (27, 'system_login_result', '退出失败', '30', 4, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 配置类型
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (28, 'infra_config_type', '系统内置', '1', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (29, 'infra_config_type', '自定义', '2', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (28, 'infra_config_type', '系统内置', '1', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (29, 'infra_config_type', '自定义', '2', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 布尔类型
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (30, 'infra_boolean_string', '是', 'true', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (31, 'infra_boolean_string', '否', 'false', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (30, 'infra_boolean_string', '是', 'true', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (31, 'infra_boolean_string', '否', 'false', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 操作类型
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (32, 'infra_operate_type', '查询', '1', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (33, 'infra_operate_type', '新增', '2', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (34, 'infra_operate_type', '修改', '3', 3, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (35, 'infra_operate_type', '删除', '4', 4, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (36, 'infra_operate_type', '导出', '5', 5, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (37, 'infra_operate_type', '导入', '6', 6, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (32, 'infra_operate_type', '查询', '1', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (33, 'infra_operate_type', '新增', '2', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (34, 'infra_operate_type', '修改', '3', 3, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (35, 'infra_operate_type', '删除', '4', 4, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (36, 'infra_operate_type', '导出', '5', 5, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (37, 'infra_operate_type', '导入', '6', 6, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 用户类型
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (38, 'user_type', '会员', '1', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (39, 'user_type', '管理员', '2', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (38, 'user_type', '会员', '1', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (39, 'user_type', '管理员', '2', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 终端
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (40, 'terminal', '未知', '0', 0, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (41, 'terminal', '浏览器', '10', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (42, 'terminal', '小程序', '11', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (43, 'terminal', 'APP', '20', 3, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (40, 'terminal', '未知', '0', 0, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (41, 'terminal', '浏览器', '10', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (42, 'terminal', '小程序', '11', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (43, 'terminal', 'APP', '20', 3, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 短信模板类型
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (44, 'system_sms_template_type', '验证码', '1', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (45, 'system_sms_template_type', '通知', '2', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (46, 'system_sms_template_type', '营销', '3', 3, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (44, 'system_sms_template_type', '验证码', '1', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (45, 'system_sms_template_type', '通知', '2', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (46, 'system_sms_template_type', '营销', '3', 3, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 短信发送状态
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (47, 'system_sms_send_status', '初始化', '0', 0, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (48, 'system_sms_send_status', '发送成功', '10', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (49, 'system_sms_send_status', '发送失败', '20', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (47, 'system_sms_send_status', '初始化', '0', 0, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (48, 'system_sms_send_status', '发送成功', '10', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (49, 'system_sms_send_status', '发送失败', '20', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 短信接收状态
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (50, 'system_sms_receive_status', '初始化', '0', 0, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (51, 'system_sms_receive_status', '接收成功', '10', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (52, 'system_sms_receive_status', '接收失败', '20', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (50, 'system_sms_receive_status', '初始化', '0', 0, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (51, 'system_sms_receive_status', '接收成功', '10', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (52, 'system_sms_receive_status', '接收失败', '20', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 邮件发送状态
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (53, 'system_mail_send_status', '初始化', '0', 0, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (54, 'system_mail_send_status', '发送成功', '10', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (55, 'system_mail_send_status', '发送失败', '20', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (53, 'system_mail_send_status', '初始化', '0', 0, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (54, 'system_mail_send_status', '发送成功', '10', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (55, 'system_mail_send_status', '发送失败', '20', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 通知模板类型
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (56, 'system_notify_template_type', '站内信', '1', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (57, 'system_notify_template_type', '短信', '2', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (58, 'system_notify_template_type', '邮件', '3', 3, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (56, 'system_notify_template_type', '站内信', '1', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (57, 'system_notify_template_type', '短信', '2', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (58, 'system_notify_template_type', '邮件', '3', 3, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
 
 -- 文件存储器
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (60, 'infra_file_storage', '本地存储', '10', 1, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
-INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (61, 'infra_file_storage', 'S3存储', '20', 2, 0, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (60, 'infra_file_storage', '本地存储', '10', 1, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;
+INSERT INTO system_dict_data (id, dict_type, label, value, sort, status, remark, created_at, updated_at) VALUES (61, 'infra_file_storage', 'S3存储', '20', 2, 1, '', 0, 0) ON CONFLICT (id) DO NOTHING;

@@ -8,6 +8,7 @@ import neton.database.dsl.*
 
 import neton.core.annotations.Controller
 import neton.core.annotations.Get
+import neton.core.annotations.PathVariable
 import neton.core.annotations.Permission
 import neton.core.annotations.Query
 import neton.logging.Logger
@@ -48,9 +49,9 @@ class ApiAccessLogController(
         )
     }
 
-    @Get("/get")
+    @Get("/get/{id}")
     @Permission("infra:api-access-log:query")
-    suspend fun get(@Query id: Long): ApiAccessLog? {
+    suspend fun get(@PathVariable id: Long): ApiAccessLog? {
         return ApiAccessLogTable.get(id)
     }
 

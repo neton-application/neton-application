@@ -69,9 +69,9 @@ class UserController(
         userLogic.updatePassword(request.id, request.newPassword)
     }
 
-    @Put("/update-status")
+    @Put("/update-status/{id}")
     @Permission("system:user:update")
-    suspend fun updateStatus(@Body request: UpdateStatusRequest) {
-        userLogic.updateStatus(request.id, request.status)
+    suspend fun updateStatus(@PathVariable id: Long, @Body request: UpdateStatusRequest) {
+        userLogic.updateStatus(id, request.status)
     }
 }

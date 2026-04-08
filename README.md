@@ -2,6 +2,10 @@
 
 An enterprise-grade admin system built on the [Neton](../neton) framework, compiled to native binaries via Kotlin/Native — fast startup, low memory footprint, single-file deployment.
 
+> Engineering rules: see [ENGINEERING_RULES.md](./ENGINEERING_RULES.md)
+>
+> Module template spec: see [docs/module-template-spec.md](./docs/module-template-spec.md)
+
 ## Tech Stack
 
 | Component | Choice |
@@ -477,7 +481,7 @@ data class Example(
     @Id val id: Long = 0,
     val name: String,
     val status: Int = 0,
-    @SoftDelete val deleted: Boolean = false,
+    @SoftDelete val deleted: Int = 0,
     @CreatedAt val createdAt: String? = null,
     @UpdatedAt val updatedAt: String? = null
 )

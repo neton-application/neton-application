@@ -2,6 +2,10 @@
 
 > 本文档描述 neton-application 的定位、架构、配置与 API 规范，供开发与对接使用。  
 > 最后更新：2026-02-26
+>
+> 开发硬规范请同时参考 [ENGINEERING_RULES.md](./ENGINEERING_RULES.md)。
+>
+> 模块模板规范请同时参考 [docs/module-template-spec.md](./docs/module-template-spec.md)。
 
 ---
 

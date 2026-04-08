@@ -32,7 +32,7 @@ class MenuLogic(
     suspend fun listAllSimple(): List<MenuVO> {
         val menus = MenuTable.query {
             where {
-                Menu::status eq 0
+                Menu::status eq 1
             }
             orderBy(Menu::sort.asc())
         }.list()
@@ -94,7 +94,7 @@ class MenuLogic(
         icon = icon,
         sort = sort,
         status = status,
-        visible = status == 0,
+        visible = status == 1,
         keepAlive = true,
         children = children
     )

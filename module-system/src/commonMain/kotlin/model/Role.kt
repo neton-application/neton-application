@@ -15,7 +15,7 @@ data class Role(
     val name: String,
     val description: String? = null,
     val sort: Int = 0,
-    val status: Int = 0,
+    val status: Int = 1,
     @CreatedAt
     val createdAt: String? = null,
     @UpdatedAt

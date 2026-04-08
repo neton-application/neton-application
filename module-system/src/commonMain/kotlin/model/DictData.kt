@@ -15,7 +15,7 @@ data class DictData(
     val label: String,
     val value: String,
     val sort: Int = 0,
-    val status: Int = 0,
+    val status: Int = 1,
     val remark: String? = null,
     @CreatedAt
     val createdAt: String? = null,

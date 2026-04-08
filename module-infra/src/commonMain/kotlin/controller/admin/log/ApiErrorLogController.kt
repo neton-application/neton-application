@@ -8,10 +8,12 @@ import neton.database.dsl.*
 
 import neton.core.annotations.Controller
 import neton.core.annotations.Get
+import neton.core.annotations.PathVariable
 import neton.core.annotations.Put
 import neton.core.annotations.Permission
 import neton.core.annotations.Query
 import neton.core.http.NotFoundException
+import neton.core.interfaces.Identity
 import neton.logging.Logger
 import kotlin.time.Clock
 
@@ -51,24 +53,24 @@ class ApiErrorLogController(
         )
     }
 
-    @Get("/get")
+    @Get("/get/{id}")
     @Permission("infra:api-error-log:query")
-    suspend fun get(@Query id: Long): ApiErrorLog? {
+    suspend fun get(@PathVariable id: Long): ApiErrorLog? {
         return ApiErrorLogTable.get(id)
     }
 
-    @Put("/update-status")
+    @Put("/update-status/{id}")
     @Permission("infra:api-error-log:update")
     suspend fun updateStatus(
-        @Query id: Long,
+        @PathVariable id: Long,
         @Query processStatus: Int,
-        @Query processUserId: Long
+        identity: Identity
     ) {
         val errorLog = ApiErrorLogTable.get(id)
             ?: throw NotFoundException("Error log not found")
         val updated = errorLog.copy(
             processStatus = processStatus,
-            processUserId = processUserId,
+            processUserId = identity.id.toLong(),
             processTime = Clock.System.now().toEpochMilliseconds()
         )
         ApiErrorLogTable.update(updated)

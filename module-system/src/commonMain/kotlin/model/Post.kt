@@ -14,7 +14,7 @@ data class Post(
     val code: String,
     val name: String,
     val sort: Int = 0,
-    val status: Int = 0,
+    val status: Int = 1,
     @CreatedAt
     val createdAt: String? = null,
     @UpdatedAt

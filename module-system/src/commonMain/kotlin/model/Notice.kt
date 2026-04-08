@@ -14,7 +14,7 @@ data class Notice(
     val title: String,
     val content: String,
     val type: Int,
-    val status: Int = 0,
+    val status: Int = 1,
     @CreatedAt
     val createdAt: String? = null,
     @UpdatedAt

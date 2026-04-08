@@ -76,10 +76,10 @@ class JobController(
         @Query handlerName: String? = null
     ) = jobLogic.pageJob(pageNo, pageSize, name, status, handlerName)
 
-    @Put("/update-status")
+    @Put("/update-status/{id}")
     @Permission("infra:job:update")
     suspend fun updateStatus(
-        @Query id: Long,
+        @PathVariable id: Long,
         @Query status: Int
     ) {
         jobLogic.updateJobStatus(id, status)

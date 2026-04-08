@@ -16,7 +16,7 @@ data class MailAccountVO(
     val port: Int = 465,
     val sslEnable: Boolean = true,
     val starttlsEnable: Boolean = false,
-    val status: Int = 0,
+    val status: Int = 1,
     val remark: String? = null,
     val createTime: String? = null
 ) {
@@ -50,13 +50,19 @@ data class MailAccountVO(
                 }
                 MailAccountVO(
                     id = channel.id,
-                    mail = obj["mail"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content } ?: channel.name,
-                    username = obj["username"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content } ?: "",
-                    password = obj["password"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content } ?: "",
+                    mail = obj["mail"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content }
+                        ?: channel.name,
+                    username = obj["username"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content }
+                        ?: "",
+                    password = obj["password"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content }
+                        ?: "",
                     host = obj["host"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content } ?: "",
-                    port = obj["port"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull() } ?: 465,
-                    sslEnable = obj["sslEnable"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.toBoolean() } ?: true,
-                    starttlsEnable = obj["starttlsEnable"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.toBoolean() } ?: false,
+                    port = obj["port"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.toIntOrNull() }
+                        ?: 465,
+                    sslEnable = obj["sslEnable"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.toBoolean() }
+                        ?: true,
+                    starttlsEnable = obj["starttlsEnable"]?.let { (it as? kotlinx.serialization.json.JsonPrimitive)?.content?.toBoolean() }
+                        ?: false,
                     status = channel.status,
                     remark = channel.remark,
                     createTime = channel.createdAt

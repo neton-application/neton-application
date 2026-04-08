@@ -13,7 +13,7 @@ data class DictType(
     val id: Long = 0,
     val name: String,
     val type: String,
-    val status: Int = 0,
+    val status: Int = 1,
     val remark: String? = null,
     @CreatedAt
     val createdAt: String? = null,

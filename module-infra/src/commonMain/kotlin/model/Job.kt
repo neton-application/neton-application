@@ -17,7 +17,7 @@ data class Job(
     val cronExpression: String? = null,
     val retryCount: Int = 0,
     val retryInterval: Int = 0,
-    val status: Int = 0,
+    val status: Int = 1,
     @CreatedAt
     val createdAt: String? = null,
     @UpdatedAt

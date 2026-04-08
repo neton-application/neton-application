@@ -12,7 +12,7 @@ data class CreateUserRequest(
     val email: String? = null,
     val mobile: String? = null,
     val sex: Int = 0,
-    val status: Int = 0,
+    val status: Int = 1,
     val remark: String? = null
 )
 
@@ -38,7 +38,6 @@ data class UpdatePasswordRequest(
 
 @Serializable
 data class UpdateStatusRequest(
-    val id: Long,
     val status: Int
 )
 

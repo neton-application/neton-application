@@ -35,7 +35,7 @@ class AuthLogic(
             User::username eq request.username
         } ?: throw BadRequestException("Invalid username or password")
 
-        if (user.status != 0) {
+        if (user.status == 0) {
             throw BadRequestException("User account is disabled")
         }
 
@@ -93,7 +93,7 @@ class AuthLogic(
         val user = UserTable.get(userId)
             ?: throw NotFoundException("User not found")
 
-        if (user.status != 0) {
+        if (user.status == 0) {
             throw BadRequestException("User account is disabled")
         }
 
@@ -146,7 +146,7 @@ class AuthLogic(
             User::mobile eq mobile
         } ?: throw NotFoundException("User not found with mobile: $mobile")
 
-        if (user.status != 0) {
+        if (user.status == 0) {
             throw BadRequestException("User account is disabled")
         }
 
@@ -237,7 +237,7 @@ class AuthLogic(
         val user = UserTable.get(socialUser.userId)
             ?: throw NotFoundException("Bound user not found")
 
-        if (user.status != 0) {
+        if (user.status == 0) {
             throw BadRequestException("User account is disabled")
         }
 

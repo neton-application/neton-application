@@ -10,7 +10,7 @@ data class NotificationTemplateVO(
     val type: Int = 0,
     val messageTemplateId: Long = 0,
     val params: String? = null,
-    val status: Int = 0,
+    val status: Int = 1,
     val remark: String? = null,
     val createdAt: String? = null
 )

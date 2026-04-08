@@ -21,9 +21,9 @@ data class User(
     val sex: Int = 0,
     val deptId: Long = 0,
     val remark: String? = null,
-    val status: Int = 0,
+    val status: Int = 1,
     @SoftDelete
-    val deleted: Boolean = false,
+    val deleted: Int = 0,
     @CreatedAt
     val createdAt: String? = null,
     @UpdatedAt

@@ -15,7 +15,7 @@ data class Dept(
     val parentId: Long = 0,
     val sort: Int = 0,
     val leaderUserId: Long? = null,
-    val status: Int = 0,
+    val status: Int = 1,
     @CreatedAt
     val createdAt: String? = null,
     @UpdatedAt

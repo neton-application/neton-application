@@ -42,7 +42,7 @@ class PermissionLogic(
         val roles = if (roleIds.isNotEmpty()) {
             RoleTable.query {
                 where { Role::id `in` roleIds }
-            }.list().filter { it.status == 0 }
+            }.list().filter { it.status == 1 }
         } else emptyList()
 
         val roleCodes = roles.map { it.code }
@@ -51,7 +51,7 @@ class PermissionLogic(
         // super_admin: return all menus and wildcard permission
         if (isSuperAdmin) {
             val allMenus = MenuTable.query {
-                where { Menu::status eq 0 }
+                where { Menu::status eq 1 }
                 orderBy(Menu::sort.asc())
             }.list()
 
@@ -80,7 +80,7 @@ class PermissionLogic(
                     where {
                         and(
                             Menu::id `in` allMenuIds,
-                            Menu::status eq 0
+                            Menu::status eq 1
                         )
                     }
                 }.list()
@@ -102,7 +102,7 @@ class PermissionLogic(
                 where {
                     and(
                         Menu::id `in` menuIds.toList(),
-                        Menu::status eq 0
+                        Menu::status eq 1
                     )
                 }
                 orderBy(Menu::sort.asc())
@@ -186,7 +186,7 @@ class PermissionLogic(
                     icon = menu.icon,
                     sort = menu.sort,
                     status = menu.status,
-                    visible = menu.status == 0,
+                    visible = menu.status == 1,
                     keepAlive = true,
                     children = children.ifEmpty { null }
                 )
