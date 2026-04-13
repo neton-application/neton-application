@@ -100,7 +100,7 @@ class DictLogic(
 
     suspend fun listAllDictTypesSimple(): List<DictTypeVO> {
         return DictTypeTable.query {
-            where { DictType::status eq 0 }
+            where { DictType::status eq 1 }
             orderBy(DictType::id.asc())
         }.list().map { it.toVO() }
     }
@@ -170,7 +170,7 @@ class DictLogic(
 
     suspend fun listAllSimpleDictData(): List<DictDataVO> {
         val dataList = DictDataTable.query {
-            where { DictData::status eq 0 }
+            where { DictData::status eq 1 }
             orderBy(DictData::sort.asc())
         }.list()
         return dataList.map { it.toVO() }
@@ -187,7 +187,7 @@ class DictLogic(
             where {
                 and(
                     DictData::dictType eq type,
-                    DictData::status eq 0
+                    DictData::status eq 1
                 )
             }
             orderBy(DictData::sort.asc())

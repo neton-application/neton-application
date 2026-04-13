@@ -82,7 +82,7 @@ class MessageChannelLogic(
         return MessageChannelTable.query {
             where {
                 and(
-                    MessageChannel::status eq 0,
+                    MessageChannel::status eq 1,
                     MessageChannel::type eq type
                 )
             }
@@ -114,7 +114,7 @@ class MessageChannelLogic(
 
     suspend fun listAllSimple(): List<MessageChannelVO> {
         return MessageChannelTable.query {
-            where { MessageChannel::status eq 0 }
+            where { MessageChannel::status eq 1 }
             orderBy(MessageChannel::id.asc())
         }.list().map { it.toVO() }
     }
@@ -123,7 +123,7 @@ class MessageChannelLogic(
         return MessageChannelTable.query {
             where {
                 and(
-                    MessageChannel::status eq 0,
+                    MessageChannel::status eq 1,
                     MessageChannel::type eq type
                 )
             }

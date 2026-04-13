@@ -3,115 +3,41 @@ package controller.admin.dept
 import controller.admin.dept.dto.CreateDeptRequest
 import controller.admin.dept.dto.DeptVO
 import controller.admin.dept.dto.UpdateDeptRequest
-import model.Dept
-import table.DeptTable
+import logic.DeptLogic
 import neton.core.annotations.*
-import neton.core.http.BadRequestException
-import neton.core.http.NotFoundException
-import neton.database.dsl.*
-
 
 @Controller("/system/dept")
-class DeptController {
+class DeptController(
+    private val deptLogic: DeptLogic
+) {
 
     @Get("/list")
     @Permission("system:dept:list")
-    suspend fun list(): List<DeptVO> {
-        val depts = DeptTable.query {
-            orderBy(Dept::sort.asc())
-        }.list()
-        return buildTree(depts, 0)
-    }
+    suspend fun list(): List<DeptVO> = deptLogic.list()
 
     @Get("/simple-list")
     @Permission("system:dept:list")
-    suspend fun listAllSimple(): List<DeptVO> {
-        val depts = DeptTable.query {
-            where { Dept::status eq 0 }
-            orderBy(Dept::sort.asc())
-        }.list()
-        return depts.map { it.toVO(children = null) }
-    }
+    suspend fun listAllSimple(): List<DeptVO> = deptLogic.listAllSimple()
 
     @Get("/get/{id}")
     @Permission("system:dept:query")
-    suspend fun get(@PathVariable id: Long): DeptVO {
-        val dept = DeptTable.get(id)
-            ?: throw NotFoundException("Department not found")
-        return dept.toVO(children = null)
-    }
+    suspend fun get(@PathVariable id: Long): DeptVO = deptLogic.getById(id)
 
     @Post("/create")
     @Permission("system:dept:create")
-    suspend fun create(@Body request: CreateDeptRequest): Long {
-        return DeptTable.insert(
-            Dept(
-                name = request.name,
-                parentId = request.parentId,
-                sort = request.sort,
-                leaderUserId = request.leaderUserId,
-                status = request.status
-            )
-        ).id
-    }
+    suspend fun create(@Body request: CreateDeptRequest): Long = deptLogic.create(request)
 
     @Put("/update")
     @Permission("system:dept:update")
-    suspend fun update(@Body request: UpdateDeptRequest) {
-        DeptTable.get(request.id)
-            ?: throw NotFoundException("Department not found")
-
-        if (request.parentId == request.id) {
-            throw BadRequestException("Parent department cannot be itself")
-        }
-
-        DeptTable.update(
-            Dept(
-                id = request.id,
-                name = request.name,
-                parentId = request.parentId,
-                sort = request.sort,
-                leaderUserId = request.leaderUserId,
-                status = request.status
-            )
-        )
-    }
+    suspend fun update(@Body request: UpdateDeptRequest) = deptLogic.update(request)
 
     @Delete("/delete/{id}")
     @Permission("system:dept:delete")
-    suspend fun delete(@PathVariable id: Long) {
-        val children = DeptTable.query {
-            where { Dept::parentId eq id }
-        }.list()
-
-        if (children.isNotEmpty()) {
-            throw BadRequestException("Cannot delete department with children")
-        }
-
-        DeptTable.destroy(id)
-    }
+    suspend fun delete(@PathVariable id: Long) = deptLogic.delete(id)
 
     @Delete("/delete-list")
     @Permission("system:dept:delete")
     suspend fun deleteList(@Query ids: String) {
-        ids.split(",").mapNotNull { it.trim().toLongOrNull() }.forEach { DeptTable.destroy(it) }
+        deptLogic.deleteList(ids.split(",").mapNotNull { it.trim().toLongOrNull() })
     }
-
-    private fun buildTree(depts: List<Dept>, parentId: Long): List<DeptVO> {
-        return depts
-            .filter { it.parentId == parentId }
-            .map { dept ->
-                val children = buildTree(depts, dept.id)
-                dept.toVO(children = children.ifEmpty { null })
-            }
-    }
-
-    private fun Dept.toVO(children: List<DeptVO>?) = DeptVO(
-        id = id,
-        name = name,
-        parentId = parentId,
-        sort = sort,
-        status = status,
-        children = children
-    )
 }

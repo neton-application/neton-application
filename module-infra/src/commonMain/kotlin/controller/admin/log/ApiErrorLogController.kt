@@ -1,25 +1,17 @@
 package controller.admin.log
 
-import controller.admin.log.dto.ApiErrorLogVO
-import dto.PageResponse
-import model.ApiErrorLog
-import table.ApiErrorLogTable
-import neton.database.dsl.*
-
+import logic.ApiErrorLogLogic
 import neton.core.annotations.Controller
 import neton.core.annotations.Get
 import neton.core.annotations.PathVariable
 import neton.core.annotations.Put
 import neton.core.annotations.Permission
 import neton.core.annotations.Query
-import neton.core.http.NotFoundException
 import neton.core.interfaces.Identity
-import neton.logging.Logger
-import kotlin.time.Clock
 
 @Controller("/infra/api-error-log")
 class ApiErrorLogController(
-    private val log: Logger
+    private val logLogic: ApiErrorLogLogic
 ) {
 
     @Get("/page")
@@ -31,33 +23,11 @@ class ApiErrorLogController(
         @Query applicationName: String? = null,
         @Query requestUrl: String? = null,
         @Query processStatus: Int? = null
-    ): PageResponse<ApiErrorLogVO> {
-        val result = ApiErrorLogTable.query {
-            where {
-                and(
-                    whenPresent(userId) { ApiErrorLog::userId eq it },
-                    whenNotBlank(applicationName) { ApiErrorLog::applicationName like "%$it%" },
-                    whenNotBlank(requestUrl) { ApiErrorLog::requestUrl like "%$it%" },
-                    whenPresent(processStatus) { ApiErrorLog::processStatus eq it }
-                )
-            }
-            orderBy(ApiErrorLog::id.desc())
-        }.page(pageNo, pageSize)
-
-        return PageResponse(
-            list = result.items.map { it.toVO() },
-            total = result.total,
-            page = pageNo,
-            size = pageSize,
-            totalPages = if (pageSize > 0) ((result.total + pageSize - 1) / pageSize).toInt() else 0
-        )
-    }
+    ) = logLogic.page(pageNo, pageSize, userId, applicationName, requestUrl, processStatus)
 
     @Get("/get/{id}")
     @Permission("infra:api-error-log:query")
-    suspend fun get(@PathVariable id: Long): ApiErrorLog? {
-        return ApiErrorLogTable.get(id)
-    }
+    suspend fun get(@PathVariable id: Long) = logLogic.getById(id)
 
     @Put("/update-status/{id}")
     @Permission("infra:api-error-log:update")
@@ -66,23 +36,6 @@ class ApiErrorLogController(
         @Query processStatus: Int,
         identity: Identity
     ) {
-        val errorLog = ApiErrorLogTable.get(id)
-            ?: throw NotFoundException("Error log not found")
-        val updated = errorLog.copy(
-            processStatus = processStatus,
-            processUserId = identity.id.toLong(),
-            processTime = Clock.System.now().toEpochMilliseconds()
-        )
-        ApiErrorLogTable.update(updated)
+        logLogic.updateStatus(id, processStatus, identity.id.toLong())
     }
-
-    private fun ApiErrorLog.toVO() = ApiErrorLogVO(
-        id = id,
-        userId = userId,
-        requestMethod = requestMethod,
-        requestUrl = requestUrl,
-        exceptionName = exceptionName,
-        processStatus = processStatus,
-        createdAt = createdAt
-    )
 }

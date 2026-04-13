@@ -47,7 +47,7 @@ class RoleLogic(
     suspend fun listAllSimple(): List<RoleVO> {
         val roles = RoleTable.query {
             where {
-                Role::status eq 0
+                Role::status eq 1
             }
             orderBy(Role::sort.asc())
         }.list()
@@ -84,29 +84,32 @@ class RoleLogic(
         RoleTable.get(id)
             ?: throw NotFoundException("Role not found")
 
-        // Remove associated role-menu mappings
-        RoleMenuTable.query {
-            where { RoleMenu::roleId eq id }
-        }.list().forEach { RoleMenuTable.destroy(it.id) }
+        // Remove associated role-menu mappings + delete role in a single transaction
+        RoleTable.transaction {
+            RoleMenuTable.query {
+                where { RoleMenu::roleId eq id }
+            }.list().forEach { RoleMenuTable.destroy(it.id) }
 
-        RoleTable.destroy(id)
+            RoleTable.destroy(id)
+        }
     }
 
     suspend fun assignMenus(roleId: Long, menuIds: List<Long>) {
         RoleTable.get(roleId)
             ?: throw NotFoundException("Role not found")
 
-        // Remove existing role-menu mappings
-        val existingMappings = RoleMenuTable.query {
-            where { RoleMenu::roleId eq roleId }
-        }.list()
-        existingMappings.forEach { RoleMenuTable.destroy(it.id) }
+        // Remove existing mappings + insert new mappings in a single transaction
+        RoleTable.transaction {
+            val existingMappings = RoleMenuTable.query {
+                where { RoleMenu::roleId eq roleId }
+            }.list()
+            existingMappings.forEach { RoleMenuTable.destroy(it.id) }
 
-        // Insert new role-menu mappings
-        menuIds.forEach { menuId ->
-            RoleMenuTable.insert(
-                RoleMenu(roleId = roleId, menuId = menuId)
-            )
+            menuIds.forEach { menuId ->
+                RoleMenuTable.insert(
+                    RoleMenu(roleId = roleId, menuId = menuId)
+                )
+            }
         }
 
         log.info("Assigned ${menuIds.size} menus to role $roleId")

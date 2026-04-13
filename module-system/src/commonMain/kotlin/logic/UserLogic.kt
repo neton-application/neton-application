@@ -54,7 +54,7 @@ class UserLogic(
     suspend fun listAllSimple(): List<UserVO> {
         val users = UserTable.query {
             where {
-                User::status eq 0
+                User::status eq 1
             }
             orderBy(User::id.asc())
         }.list()

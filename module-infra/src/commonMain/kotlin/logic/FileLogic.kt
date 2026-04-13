@@ -121,15 +121,16 @@ class FileLogic(
     }
 
     suspend fun updateMaster(id: Long) {
-        // Reset all configs to non-master
-        FileConfigTable.query {}.list().forEach { config ->
-            if (config.master != 0) {
-                FileConfigTable.update(config.copy(master = 0))
+        // Reset all configs to non-master + set the specified config as master in a single transaction
+        FileConfigTable.transaction {
+            FileConfigTable.query {}.list().forEach { config ->
+                if (config.master != 0) {
+                    FileConfigTable.update(config.copy(master = 0))
+                }
             }
+            val config = FileConfigTable.get(id) ?: return@transaction
+            FileConfigTable.update(config.copy(master = 1))
         }
-        // Set the specified config as master
-        val config = FileConfigTable.get(id) ?: return
-        FileConfigTable.update(config.copy(master = 1))
         log.info("Set file config id: $id as master")
     }
 

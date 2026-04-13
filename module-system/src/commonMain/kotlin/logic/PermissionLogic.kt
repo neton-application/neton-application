@@ -132,15 +132,16 @@ class PermissionLogic(
         RoleTable.get(roleId)
             ?: throw NotFoundException("Role not found")
 
-        // Remove existing mappings
-        val existing = RoleMenuTable.query {
-            where { RoleMenu::roleId eq roleId }
-        }.list()
-        existing.forEach { RoleMenuTable.destroy(it.id) }
+        // Remove existing mappings + insert new mappings in a single transaction
+        RoleMenuTable.transaction {
+            val existing = RoleMenuTable.query {
+                where { RoleMenu::roleId eq roleId }
+            }.list()
+            existing.forEach { RoleMenuTable.destroy(it.id) }
 
-        // Insert new mappings
-        menuIds.forEach { menuId ->
-            RoleMenuTable.insert(RoleMenu(roleId = roleId, menuId = menuId))
+            menuIds.forEach { menuId ->
+                RoleMenuTable.insert(RoleMenu(roleId = roleId, menuId = menuId))
+            }
         }
 
         log.info("Assigned ${menuIds.size} menus to role $roleId")
@@ -155,15 +156,16 @@ class PermissionLogic(
     }
 
     suspend fun assignUserRole(userId: Long, roleIds: List<Long>) {
-        // Remove existing mappings
-        val existing = UserRoleTable.query {
-            where { UserRole::userId eq userId }
-        }.list()
-        existing.forEach { UserRoleTable.destroy(it.id) }
+        // Remove existing mappings + insert new mappings in a single transaction
+        UserRoleTable.transaction {
+            val existing = UserRoleTable.query {
+                where { UserRole::userId eq userId }
+            }.list()
+            existing.forEach { UserRoleTable.destroy(it.id) }
 
-        // Insert new mappings
-        roleIds.forEach { roleId ->
-            UserRoleTable.insert(UserRole(userId = userId, roleId = roleId))
+            roleIds.forEach { roleId ->
+                UserRoleTable.insert(UserRole(userId = userId, roleId = roleId))
+            }
         }
 
         log.info("Assigned ${roleIds.size} roles to user $userId")
