@@ -1,6 +1,8 @@
 package controller.admin.job
 
+import controller.admin.job.dto.CreateJobRequest
 import controller.admin.job.dto.JobVO
+import controller.admin.job.dto.UpdateJobRequest
 import logic.JobLogic
 import model.Job
 import neton.core.annotations.Controller
@@ -23,27 +25,27 @@ class JobController(
 
     @Post("/create")
     @Permission("infra:job:create")
-    suspend fun create(@Body vo: JobVO): Long {
+    suspend fun create(@Body request: CreateJobRequest): Long {
         val job = Job(
-            name = vo.name ?: "",
-            handlerName = vo.handlerName ?: "",
-            handlerParam = vo.handlerParam,
-            cronExpression = vo.cronExpression,
-            status = vo.status ?: 0
+            name = request.name,
+            handlerName = request.handlerName,
+            handlerParam = request.handlerParam,
+            cronExpression = request.cronExpression,
+            status = request.status
         )
         return jobLogic.createJob(job)
     }
 
     @Put("/update")
     @Permission("infra:job:update")
-    suspend fun update(@Body vo: JobVO) {
-        val existing = jobLogic.getJob(vo.id) ?: throw NotFoundException("Job not found")
+    suspend fun update(@Body request: UpdateJobRequest) {
+        val existing = jobLogic.getJob(request.id) ?: throw NotFoundException("Job not found")
         val job = existing.copy(
-            name = vo.name ?: existing.name,
-            handlerName = vo.handlerName ?: existing.handlerName,
-            handlerParam = vo.handlerParam ?: existing.handlerParam,
-            cronExpression = vo.cronExpression ?: existing.cronExpression,
-            status = vo.status ?: existing.status
+            name = request.name,
+            handlerName = request.handlerName,
+            handlerParam = request.handlerParam,
+            cronExpression = request.cronExpression,
+            status = request.status
         )
         jobLogic.updateJob(job)
     }

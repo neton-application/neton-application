@@ -1,6 +1,10 @@
 package controller.admin.menu.dto
 
 import kotlinx.serialization.Serializable
+import neton.validation.annotations.Max
+import neton.validation.annotations.Min
+import neton.validation.annotations.NotBlank
+import neton.validation.annotations.Size
 
 @Serializable
 data class MenuVO(
@@ -17,4 +21,75 @@ data class MenuVO(
     val visible: Boolean,
     val keepAlive: Boolean,
     val children: List<MenuVO>? = null
+)
+
+@Serializable
+data class CreateMenuRequest(
+    @property:NotBlank
+    @property:Size(min = 1, max = 64)
+    val name: String,
+
+    @property:Size(min = 0, max = 100)
+    val permission: String? = null,
+
+    @property:Min(1)
+    @property:Max(3)
+    val type: Int,
+
+    @property:Min(0)
+    val parentId: Long = 0,
+
+    @property:Size(min = 0, max = 255)
+    val path: String? = null,
+
+    @property:Size(min = 0, max = 255)
+    val component: String? = null,
+
+    @property:Size(min = 0, max = 100)
+    val icon: String? = null,
+
+    @property:Min(0)
+    @property:Max(9999)
+    val sort: Int = 0,
+
+    @property:Min(0)
+    @property:Max(1)
+    val status: Int = 1
+)
+
+@Serializable
+data class UpdateMenuRequest(
+    @property:Min(1)
+    val id: Long,
+
+    @property:NotBlank
+    @property:Size(min = 1, max = 64)
+    val name: String,
+
+    @property:Size(min = 0, max = 100)
+    val permission: String? = null,
+
+    @property:Min(1)
+    @property:Max(3)
+    val type: Int,
+
+    @property:Min(0)
+    val parentId: Long = 0,
+
+    @property:Size(min = 0, max = 255)
+    val path: String? = null,
+
+    @property:Size(min = 0, max = 255)
+    val component: String? = null,
+
+    @property:Size(min = 0, max = 100)
+    val icon: String? = null,
+
+    @property:Min(0)
+    @property:Max(9999)
+    val sort: Int = 0,
+
+    @property:Min(0)
+    @property:Max(1)
+    val status: Int = 1
 )

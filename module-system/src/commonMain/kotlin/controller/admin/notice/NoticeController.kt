@@ -1,6 +1,8 @@
 package controller.admin.notice
 
+import controller.admin.notice.dto.CreateNoticeRequest
 import controller.admin.notice.dto.NoticeVO
+import controller.admin.notice.dto.UpdateNoticeRequest
 import dto.PageResponse
 import model.Notice
 import table.NoticeTable
@@ -52,16 +54,31 @@ class NoticeController {
 
     @Post("/create")
     @Permission("system:notice:create")
-    suspend fun create(@Body notice: Notice): Long {
-        return NoticeTable.insert(notice).id
+    suspend fun create(@Body request: CreateNoticeRequest): Long {
+        return NoticeTable.insert(
+            Notice(
+                title = request.title,
+                content = request.content,
+                type = request.type,
+                status = request.status
+            )
+        ).id
     }
 
     @Put("/update")
     @Permission("system:notice:update")
-    suspend fun update(@Body notice: Notice) {
-        NoticeTable.get(notice.id)
+    suspend fun update(@Body request: UpdateNoticeRequest) {
+        NoticeTable.get(request.id)
             ?: throw NotFoundException("Notice not found")
-        NoticeTable.update(notice)
+        NoticeTable.update(
+            Notice(
+                id = request.id,
+                title = request.title,
+                content = request.content,
+                type = request.type,
+                status = request.status
+            )
+        )
     }
 
     @Delete("/delete/{id}")

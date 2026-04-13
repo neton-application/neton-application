@@ -25,6 +25,10 @@ class MessageSendLogic(
         private const val SMS_CODE_TTL_SECONDS = 300L  // 5 minutes
     }
 
+    private fun maskMobile(mobile: String): String {
+        return if (mobile.length < 7) "***" else "${mobile.take(3)}****${mobile.takeLast(4)}"
+    }
+
     /**
      * Send a message using a template code and parameters.
      * Flow: lookup template → lookup channel → render content → send via provider → log result
@@ -74,9 +78,9 @@ class MessageSendLogic(
         // Store code in Redis
         if (redis != null) {
             redis.set("$SMS_CODE_PREFIX$mobile", code, SMS_CODE_TTL_SECONDS.seconds)
-            log.info("SMS verification code for $mobile: $code (scene=$scene)")
+            log.info("sms.code.generated", mapOf("mobile" to maskMobile(mobile), "scene" to scene))
         } else {
-            log.warn("Redis not available, SMS code for $mobile: $code")
+            log.warn("sms.code.redis_unavailable", mapOf("mobile" to maskMobile(mobile), "scene" to scene))
         }
 
         // Try to send via template if configured

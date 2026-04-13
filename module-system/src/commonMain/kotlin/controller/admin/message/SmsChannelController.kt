@@ -1,16 +1,28 @@
 package controller.admin.message
 
+import controller.admin.message.dto.CreateMessageChannelRequest
 import controller.admin.message.dto.MessageChannelVO
+import controller.admin.message.dto.UpdateMessageChannelRequest
 import dto.PageResponse
 import logic.MessageChannelLogic
 import model.MessageChannel
 import kotlinx.serialization.Serializable
 import neton.core.annotations.*
+import neton.validation.annotations.Min
+import neton.validation.annotations.NotBlank
+import neton.validation.annotations.Size
 
 @Serializable
 data class SmsChannelSendTestRequest(
+    @property:Min(1)
     val channelId: Long,
+
+    @property:NotBlank
+    @property:Size(min = 2, max = 256)
     val receiver: String,
+
+    @property:NotBlank
+    @property:Size(min = 1, max = 4000)
     val content: String
 )
 
@@ -44,14 +56,33 @@ class SmsChannelController(
 
     @Post("/create")
     @Permission("system:sms-channel:create")
-    suspend fun create(@Body channel: MessageChannel): Long {
-        return messageChannelLogic.create(channel.copy(type = "sms"))
+    suspend fun create(@Body request: CreateMessageChannelRequest): Long {
+        return messageChannelLogic.create(
+            MessageChannel(
+                name = request.name,
+                code = request.code,
+                type = "sms",
+                config = request.config,
+                status = request.status,
+                remark = request.remark
+            )
+        )
     }
 
     @Put("/update")
     @Permission("system:sms-channel:update")
-    suspend fun update(@Body channel: MessageChannel) {
-        messageChannelLogic.update(channel)
+    suspend fun update(@Body request: UpdateMessageChannelRequest) {
+        messageChannelLogic.update(
+            MessageChannel(
+                id = request.id,
+                name = request.name,
+                code = request.code,
+                type = "sms",
+                config = request.config,
+                status = request.status,
+                remark = request.remark
+            )
+        )
     }
 
     @Delete("/delete/{id}")

@@ -1,8 +1,10 @@
 package controller.admin.message
 
+import controller.admin.message.dto.CreateNotificationTemplateRequest
 import controller.admin.message.dto.NotificationTemplateVO
 import dto.PageResponse
 import controller.admin.message.dto.SendMessageRequest
+import controller.admin.message.dto.UpdateNotificationTemplateRequest
 import logic.NotificationTemplateLogic
 import model.NotificationTemplate
 import neton.core.annotations.*
@@ -32,14 +34,35 @@ class NotifyTemplateController(
 
     @Post("/create")
     @Permission("system:notify-template:create")
-    suspend fun create(@Body template: NotificationTemplate): Long {
-        return notificationTemplateLogic.create(template)
+    suspend fun create(@Body request: CreateNotificationTemplateRequest): Long {
+        return notificationTemplateLogic.create(
+            NotificationTemplate(
+                name = request.name,
+                code = request.code,
+                type = request.type,
+                messageTemplateId = request.messageTemplateId,
+                params = request.params,
+                status = request.status,
+                remark = request.remark
+            )
+        )
     }
 
     @Put("/update")
     @Permission("system:notify-template:update")
-    suspend fun update(@Body template: NotificationTemplate) {
-        notificationTemplateLogic.update(template)
+    suspend fun update(@Body request: UpdateNotificationTemplateRequest) {
+        notificationTemplateLogic.update(
+            NotificationTemplate(
+                id = request.id,
+                name = request.name,
+                code = request.code,
+                type = request.type,
+                messageTemplateId = request.messageTemplateId,
+                params = request.params,
+                status = request.status,
+                remark = request.remark
+            )
+        )
     }
 
     @Delete("/delete/{id}")

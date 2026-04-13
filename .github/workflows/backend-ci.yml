@@ -1,0 +1,73 @@
+name: Backend CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  application-build:
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout application
+        uses: actions/checkout@v4
+        with:
+          path: neton-application
+
+      - name: Checkout framework
+        uses: actions/checkout@v4
+        with:
+          repository: netonframework/neton
+          path: neton
+
+      - name: Checkout member module
+        uses: actions/checkout@v4
+        with:
+          repository: neton-application/neton-application-module-member
+          path: neton-application-module-member
+
+      - name: Checkout payment module
+        uses: actions/checkout@v4
+        with:
+          repository: neton-application/neton-application-module-payment
+          path: neton-application-module-payment
+
+      - name: Checkout platform module
+        uses: actions/checkout@v4
+        with:
+          repository: neton-application/neton-application-module-platform
+          path: neton-application-module-platform
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v3
+        with:
+          build-root-directory: neton-application
+
+      - name: Generate KSP outputs for composite modules
+        working-directory: neton-application
+        run: |
+          rm -rf ../neton-application-module-member/build/generated ../neton-application-module-member/build/classes ../neton-application-module-member/build/kotlin
+          rm -rf ../neton-application-module-payment/build/generated ../neton-application-module-payment/build/classes ../neton-application-module-payment/build/kotlin
+          rm -rf ../neton-application-module-platform/build/generated ../neton-application-module-platform/build/classes ../neton-application-module-platform/build/kotlin
+          rm -rf module-system/build/generated module-system/build/classes module-system/build/kotlin
+          rm -rf module-infra/build/generated module-infra/build/classes module-infra/build/kotlin
+          ./gradlew :module-system:kspKotlinMacosArm64 --rerun-tasks
+          ./gradlew :module-infra:kspKotlinMacosArm64 --rerun-tasks
+          (cd ../neton-application-module-member && ./gradlew kspKotlinMacosArm64 --rerun-tasks)
+          (cd ../neton-application-module-payment && ./gradlew kspKotlinMacosArm64 --rerun-tasks)
+          (cd ../neton-application-module-platform && ./gradlew kspKotlinMacosArm64 --rerun-tasks)
+
+      - name: Compile application
+        working-directory: neton-application
+        run: ./gradlew :application:compileKotlinMacosArm64

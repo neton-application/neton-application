@@ -1,7 +1,9 @@
 package controller.admin.role
 
 import dto.PageResponse
+import controller.admin.role.dto.CreateRoleRequest
 import controller.admin.role.dto.RoleVO
+import controller.admin.role.dto.UpdateRoleRequest
 import logic.RoleLogic
 import model.Role
 import neton.core.annotations.*
@@ -37,14 +39,31 @@ class RoleController(
 
     @Post("/create")
     @Permission("system:role:create")
-    suspend fun create(@Body role: Role): Long {
-        return roleLogic.create(role)
+    suspend fun create(@Body request: CreateRoleRequest): Long {
+        return roleLogic.create(
+            Role(
+                code = request.code,
+                name = request.name,
+                description = request.description,
+                sort = request.sort,
+                status = request.status
+            )
+        )
     }
 
     @Put("/update")
     @Permission("system:role:update")
-    suspend fun update(@Body role: Role) {
-        roleLogic.update(role)
+    suspend fun update(@Body request: UpdateRoleRequest) {
+        roleLogic.update(
+            Role(
+                id = request.id,
+                code = request.code,
+                name = request.name,
+                description = request.description,
+                sort = request.sort,
+                status = request.status
+            )
+        )
     }
 
     @Delete("/delete/{id}")

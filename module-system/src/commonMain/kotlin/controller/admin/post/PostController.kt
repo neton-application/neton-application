@@ -1,7 +1,9 @@
 package controller.admin.post
 
 import dto.PageResponse
+import controller.admin.post.dto.CreatePostRequest
 import controller.admin.post.dto.PostVO
+import controller.admin.post.dto.UpdatePostRequest
 import model.Post
 import table.PostTable
 import neton.core.annotations.Controller
@@ -70,24 +72,39 @@ class PostController {
 
     @neton.core.annotations.Post("/create")
     @Permission("system:post:create")
-    suspend fun create(@Body post: Post): Long {
+    suspend fun create(@Body request: CreatePostRequest): Long {
         val existing = PostTable.oneWhere {
-            Post::code eq post.code
+            Post::code eq request.code
         }
 
         if (existing != null) {
             throw BadRequestException("Post code already exists")
         }
 
-        return PostTable.insert(post).id
+        return PostTable.insert(
+            Post(
+                code = request.code,
+                name = request.name,
+                sort = request.sort,
+                status = request.status
+            )
+        ).id
     }
 
     @Put("/update")
     @Permission("system:post:update")
-    suspend fun update(@Body post: Post) {
-        PostTable.get(post.id)
+    suspend fun update(@Body request: UpdatePostRequest) {
+        PostTable.get(request.id)
             ?: throw NotFoundException("Post not found")
-        PostTable.update(post)
+        PostTable.update(
+            Post(
+                id = request.id,
+                code = request.code,
+                name = request.name,
+                sort = request.sort,
+                status = request.status
+            )
+        )
     }
 
     @Delete("/delete/{id}")

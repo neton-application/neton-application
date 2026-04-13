@@ -2,9 +2,9 @@
 -- neton-application 初始化数据 (PostgreSQL)
 -- =============================================
 
--- 初始化超级管理员用户 (密码: admin123)
+-- 初始化超级管理员用户 (登录口令: admin123；数据库中保存为框架标准哈希)
 INSERT INTO system_users (id, username, password_hash, nickname, status, created_at, updated_at)
-VALUES (1, 'admin', 'dcf97c4b4415986cad61148a408e87b17968bfe4904cda4d64b5e17064d1a0f8', '超级管理员', 1, 0, 0)
+VALUES (1, 'admin', 'pbkdf2-sha256$210000$bG9uZ2xpdmVuZXRvbjIwMg$Vkgw7lb_za84bhyNLsFSB6fwt3hAf2HTcB6BhGca5EY', '超级管理员', 1, 0, 0)
 ON CONFLICT (id) DO NOTHING;
 
 -- 初始化超级管理员角色

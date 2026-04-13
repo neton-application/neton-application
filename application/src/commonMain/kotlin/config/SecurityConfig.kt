@@ -5,15 +5,14 @@ import neton.core.config.NetonConfig
 import neton.core.config.NetonConfigurer
 import neton.core.interfaces.SecurityBuilder
 
-const val JWT_SECRET = "neton-backend-v1-secret-key-change-in-production"
-
 @NetonConfig("security", order = 0)
 class SecurityConfig : NetonConfigurer<SecurityBuilder> {
     override fun configure(ctx: NetonContext, target: SecurityBuilder) {
+        val jwtConfig = loadJwtRuntimeConfig(ctx)
         target.registerJwtAuthenticator(
-            secretKey = JWT_SECRET,
-            headerName = "Authorization",
-            tokenPrefix = "Bearer "
+            secretKey = jwtConfig.secretKey,
+            headerName = jwtConfig.headerName,
+            tokenPrefix = jwtConfig.tokenPrefix
         )
         target.bindDefaultGuard()
         // super_admin 角色拥有所有权限

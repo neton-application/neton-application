@@ -9,7 +9,7 @@ repositories {
 }
 
 kotlin {
-    listOf(macosArm64(), macosX64(), linuxX64(), linuxArm64(), mingwX64()).forEach { target ->
+    listOf(macosArm64(), linuxX64(), linuxArm64(), mingwX64()).forEach { target ->
         target.binaries {
             executable {
                 entryPoint = "main"
@@ -57,6 +57,8 @@ dependencies {
     add("kspMacosArm64", "com.netonstream:neton-ksp")
 }
 
+val macosArm64KspOutputDir = layout.buildDirectory.dir("generated/ksp/macosArm64/macosArm64Main/kotlin")
+
 afterEvaluate {
     val kspOut = file("build/generated/ksp/macosArm64/macosArm64Main/kotlin")
     kotlin.sourceSets.named("commonMain") {
@@ -73,14 +75,20 @@ tasks.matching { it.name == "compileCommonMainKotlinMetadata" }.configureEach {
     dependsOn("kspKotlinMacosArm64")
 }
 
-tasks.matching { it.name.matches(Regex("compileKotlin(MacosArm64|MacosX64|LinuxX64|LinuxArm64|MingwX64)")) }.configureEach {
+tasks.matching { it.name.matches(Regex("compileKotlin(MacosArm64|LinuxX64|LinuxArm64|MingwX64)")) }.configureEach {
     dependsOn("kspKotlinMacosArm64")
+}
+
+tasks.matching { it.name == "kspKotlinMacosArm64" }.configureEach {
+    outputs.upToDateWhen {
+        val outDir = macosArm64KspOutputDir.get().asFile
+        outDir.exists() && outDir.walkTopDown().any { it.isFile }
+    }
 }
 
 tasks.matching { it.name.startsWith("linkDebugExecutable") }.configureEach {
     val targetName = when {
         name.contains("MacosArm64") -> "MacosArm64"
-        name.contains("MacosX64") -> "MacosX64"
         name.contains("LinuxX64") -> "LinuxX64"
         name.contains("LinuxArm64") -> "LinuxArm64"
         name.contains("MingwX64") -> "MingwX64"

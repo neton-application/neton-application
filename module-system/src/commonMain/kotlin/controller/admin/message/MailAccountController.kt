@@ -1,6 +1,8 @@
 package controller.admin.message
 
+import controller.admin.message.dto.CreateMailAccountRequest
 import controller.admin.message.dto.MailAccountVO
+import controller.admin.message.dto.UpdateMailAccountRequest
 import dto.PageResponse
 import logic.MessageChannelLogic
 import neton.core.annotations.*
@@ -38,14 +40,39 @@ class MailAccountController(
 
     @Post("/create")
     @Permission("system:mail-account:create")
-    suspend fun create(@Body vo: MailAccountVO): Long {
-        return messageChannelLogic.create(vo.toChannel())
+    suspend fun create(@Body request: CreateMailAccountRequest): Long {
+        return messageChannelLogic.create(
+            MailAccountVO(
+                mail = request.mail,
+                username = request.username,
+                password = request.password,
+                host = request.host,
+                port = request.port,
+                sslEnable = request.sslEnable,
+                starttlsEnable = request.starttlsEnable,
+                status = request.status,
+                remark = request.remark
+            ).toChannel()
+        )
     }
 
     @Put("/update")
     @Permission("system:mail-account:update")
-    suspend fun update(@Body vo: MailAccountVO) {
-        messageChannelLogic.update(vo.toChannel())
+    suspend fun update(@Body request: UpdateMailAccountRequest) {
+        messageChannelLogic.update(
+            MailAccountVO(
+                id = request.id,
+                mail = request.mail,
+                username = request.username,
+                password = request.password,
+                host = request.host,
+                port = request.port,
+                sslEnable = request.sslEnable,
+                starttlsEnable = request.starttlsEnable,
+                status = request.status,
+                remark = request.remark
+            ).toChannel()
+        )
     }
 
     @Delete("/delete/{id}")

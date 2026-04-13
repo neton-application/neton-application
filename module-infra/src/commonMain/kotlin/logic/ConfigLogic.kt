@@ -61,7 +61,7 @@ class ConfigLogic(
 
         // Store value in cache for next time
         if (config != null && cached == null) {
-            redis?.set("$CACHE_PREFIX$configKey", config.value ?: "", ttl = CACHE_TTL)
+            redis?.set("$CACHE_PREFIX$configKey", config.value, ttl = CACHE_TTL)
         }
 
         return config

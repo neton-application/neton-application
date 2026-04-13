@@ -1,8 +1,10 @@
 package controller.admin.message
 
+import controller.admin.message.dto.CreateMessageTemplateRequest
 import controller.admin.message.dto.MessageTemplateVO
 import dto.PageResponse
 import controller.admin.message.dto.SendMessageRequest
+import controller.admin.message.dto.UpdateMessageTemplateRequest
 import logic.MessageSendLogic
 import logic.MessageTemplateLogic
 import model.MessageTemplate
@@ -35,14 +37,37 @@ class MessageTemplateController(
 
     @Post("/create")
     @Permission("system:message-template:create")
-    suspend fun create(@Body template: MessageTemplate): Long {
-        return messageTemplateLogic.create(template)
+    suspend fun create(@Body request: CreateMessageTemplateRequest): Long {
+        return messageTemplateLogic.create(
+            MessageTemplate(
+                name = request.name,
+                code = request.code,
+                content = request.content,
+                params = request.params,
+                channelId = request.channelId,
+                type = request.type,
+                status = request.status,
+                remark = request.remark
+            )
+        )
     }
 
     @Put("/update")
     @Permission("system:message-template:update")
-    suspend fun update(@Body template: MessageTemplate) {
-        messageTemplateLogic.update(template)
+    suspend fun update(@Body request: UpdateMessageTemplateRequest) {
+        messageTemplateLogic.update(
+            MessageTemplate(
+                id = request.id,
+                name = request.name,
+                code = request.code,
+                content = request.content,
+                params = request.params,
+                channelId = request.channelId,
+                type = request.type,
+                status = request.status,
+                remark = request.remark
+            )
+        )
     }
 
     @Delete("/delete/{id}")

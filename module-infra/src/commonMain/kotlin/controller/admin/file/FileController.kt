@@ -2,6 +2,7 @@ package controller.admin.file
 
 import controller.admin.file.dto.FileInfoVO
 import controller.admin.file.dto.FilePresignedUrlVO
+import controller.admin.file.dto.UploadFileRequest
 import logic.FileLogic
 import model.FileInfo
 import neton.core.annotations.Controller
@@ -22,14 +23,14 @@ class FileController(
 
     @Post("/upload")
     @Permission("infra:file:upload")
-    suspend fun upload(@Body vo: FileInfoVO): Long {
+    suspend fun upload(@Body request: UploadFileRequest): Long {
         val fileInfo = FileInfo(
-            configId = vo.configId,
-            name = vo.name ?: "",
-            path = vo.path ?: "",
-            url = vo.url,
-            mimeType = vo.mimeType,
-            size = vo.size
+            configId = request.configId,
+            name = request.name,
+            path = request.path,
+            url = request.url,
+            mimeType = request.mimeType,
+            size = request.size
         )
         return fileLogic.createFileInfo(fileInfo)
     }

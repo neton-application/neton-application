@@ -15,8 +15,8 @@ import table.UserTable
 import neton.core.http.BadRequestException
 import neton.core.http.NotFoundException
 import neton.logging.Logger
-import infra.PasswordEncoder
 import neton.database.dsl.*
+import neton.security.password.PasswordHasher
 
 
 class UserLogic(
@@ -113,7 +113,7 @@ class UserLogic(
 
         val user = User(
             username = request.username,
-            passwordHash = PasswordEncoder.encode(request.password),
+            passwordHash = PasswordHasher.hash(request.password),
             nickname = request.nickname,
             email = request.email,
             mobile = request.mobile,
@@ -149,7 +149,7 @@ class UserLogic(
         val user = UserTable.get(id)
             ?: throw NotFoundException("User not found")
 
-        UserTable.update(user.copy(passwordHash = PasswordEncoder.encode(newPassword)))
+        UserTable.update(user.copy(passwordHash = PasswordHasher.hash(newPassword)))
     }
 
     suspend fun updateStatus(id: Long, status: Int) {

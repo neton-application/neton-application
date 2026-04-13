@@ -1,6 +1,8 @@
 package controller.admin.config
 
 import controller.admin.config.dto.ConfigVO
+import controller.admin.config.dto.CreateConfigRequest
+import controller.admin.config.dto.UpdateConfigRequest
 import logic.ConfigLogic
 import model.Config
 import neton.core.annotations.Controller
@@ -23,29 +25,29 @@ class ConfigController(
 
     @Post("/create")
     @Permission("infra:config:create")
-    suspend fun create(@Body vo: ConfigVO): Long {
+    suspend fun create(@Body request: CreateConfigRequest): Long {
         val config = Config(
-            category = vo.category ?: "",
-            configKey = vo.configKey ?: "",
-            value = vo.value ?: "",
-            type = vo.type ?: 0,
-            name = vo.name ?: "",
-            remark = vo.remark
+            category = request.category,
+            configKey = request.configKey,
+            value = request.value,
+            type = request.type,
+            name = request.name,
+            remark = request.remark
         )
         return configLogic.create(config)
     }
 
     @Put("/update")
     @Permission("infra:config:update")
-    suspend fun update(@Body vo: ConfigVO) {
-        val existing = configLogic.get(vo.id) ?: throw NotFoundException("Config not found")
+    suspend fun update(@Body request: UpdateConfigRequest) {
+        val existing = configLogic.get(request.id) ?: throw NotFoundException("Config not found")
         val config = existing.copy(
-            category = vo.category ?: existing.category,
-            configKey = vo.configKey ?: existing.configKey,
-            value = vo.value ?: existing.value,
-            type = vo.type ?: existing.type,
-            name = vo.name ?: existing.name,
-            remark = vo.remark ?: existing.remark
+            category = request.category,
+            configKey = request.configKey,
+            value = request.value,
+            type = request.type,
+            name = request.name,
+            remark = request.remark
         )
         configLogic.update(config)
     }

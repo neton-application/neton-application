@@ -87,10 +87,9 @@ class PermissionLogic(
 
                 menus.forEach { menu ->
                     menuIds.add(menu.id)
-                    if (!menu.permission.isNullOrBlank()) {
-                        if (!permissions.contains(menu.permission!!)) {
-                            permissions.add(menu.permission!!)
-                        }
+                    val permission = menu.permission
+                    if (!permission.isNullOrBlank() && permission !in permissions) {
+                        permissions.add(permission)
                     }
                 }
             }

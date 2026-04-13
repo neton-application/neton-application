@@ -5,7 +5,7 @@ import neton.core.component.NetonContext
 import neton.core.module.ModuleInitializer
 import neton.logging.LoggerFactory
 import neton.security.jwt.JwtAuthenticatorV1
-import config.JWT_SECRET
+import config.buildJwtAuthenticator
 
 // models
 import model.*
@@ -28,7 +28,7 @@ object SystemModuleInitializer : ModuleInitializer {
         registerTables(registry)
 
         // ===== 创建共享服务 =====
-        val jwt = JwtAuthenticatorV1(JWT_SECRET)
+        val jwt = ctx.getOrNull(JwtAuthenticatorV1::class) ?: buildJwtAuthenticator(ctx)
         ctx.bind(JwtAuthenticatorV1::class, jwt)
 
         // ===== 创建 Provider =====

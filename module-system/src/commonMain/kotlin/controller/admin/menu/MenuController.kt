@@ -1,6 +1,8 @@
 package controller.admin.menu
 
+import controller.admin.menu.dto.CreateMenuRequest
 import controller.admin.menu.dto.MenuVO
+import controller.admin.menu.dto.UpdateMenuRequest
 import logic.MenuLogic
 import model.Menu
 import neton.core.annotations.*
@@ -30,14 +32,39 @@ class MenuController(
 
     @Post("/create")
     @Permission("system:menu:create")
-    suspend fun create(@Body menu: Menu): Long {
-        return menuLogic.create(menu)
+    suspend fun create(@Body request: CreateMenuRequest): Long {
+        return menuLogic.create(
+            Menu(
+                name = request.name,
+                permission = request.permission,
+                type = request.type,
+                parentId = request.parentId,
+                path = request.path,
+                component = request.component,
+                icon = request.icon,
+                sort = request.sort,
+                status = request.status
+            )
+        )
     }
 
     @Put("/update")
     @Permission("system:menu:update")
-    suspend fun update(@Body menu: Menu) {
-        menuLogic.update(menu)
+    suspend fun update(@Body request: UpdateMenuRequest) {
+        menuLogic.update(
+            Menu(
+                id = request.id,
+                name = request.name,
+                permission = request.permission,
+                type = request.type,
+                parentId = request.parentId,
+                path = request.path,
+                component = request.component,
+                icon = request.icon,
+                sort = request.sort,
+                status = request.status
+            )
+        )
     }
 
     @Delete("/delete/{id}")

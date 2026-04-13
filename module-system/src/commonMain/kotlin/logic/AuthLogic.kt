@@ -12,11 +12,12 @@ import neton.security.jwt.JwtAuthenticatorV1
 import neton.core.http.BadRequestException
 import neton.core.http.NotFoundException
 import neton.logging.Logger
-import infra.PasswordEncoder
 import neton.database.dsl.*
 
 import kotlin.time.Clock
+import neton.security.identity.AuthenticationException
 import neton.security.identity.UserId
+import neton.security.password.PasswordHasher
 
 class AuthLogic(
     private val log: Logger,
@@ -39,9 +40,12 @@ class AuthLogic(
             throw BadRequestException("User account is disabled")
         }
 
-        val passwordValid = verifyPassword(request.password, user.passwordHash)
-        if (!passwordValid) {
+        val passwordVerification = PasswordHasher.verify(request.password, user.passwordHash)
+        if (!passwordVerification.verified) {
             throw BadRequestException("Invalid username or password")
+        }
+        if (passwordVerification.needsRehash) {
+            UserTable.update(user.copy(passwordHash = PasswordHasher.hash(request.password)))
         }
 
         // Fetch user roles for the token
@@ -87,8 +91,15 @@ class AuthLogic(
     }
 
     suspend fun refreshToken(refreshToken: String): LoginResponse {
-        val userId = parseTokenUserId(refreshToken)
-            ?: throw BadRequestException("Invalid or expired refresh token")
+        val verifiedToken = try {
+            jwt.verifyToken(refreshToken)
+        } catch (_: AuthenticationException) {
+            throw BadRequestException("Invalid or expired refresh token")
+        }
+        if (verifiedToken.claimString("type") != "refresh") {
+            throw BadRequestException("Invalid or expired refresh token")
+        }
+        val userId = verifiedToken.identity.userId.value.toLong()
 
         val user = UserTable.get(userId)
             ?: throw NotFoundException("User not found")
@@ -206,7 +217,7 @@ class AuthLogic(
             User::mobile eq mobile
         } ?: throw NotFoundException("User not found with mobile: $mobile")
 
-        val hashedPassword = PasswordEncoder.encode(newPassword)
+        val hashedPassword = PasswordHasher.hash(newPassword)
         UserTable.update(user.copy(passwordHash = hashedPassword))
         log.info("Password reset for user: ${user.username}")
     }
@@ -277,51 +288,5 @@ class AuthLogic(
             username = user.username,
             nickname = user.nickname
         )
-    }
-
-    private fun verifyPassword(rawPassword: String, passwordHash: String): Boolean {
-        return PasswordEncoder.matches(rawPassword, passwordHash)
-    }
-
-    private fun parseTokenUserId(token: String): Long? {
-        return try {
-            val parts = token.split(".")
-            if (parts.size != 3) return null
-            val payload = parts[1]
-            val decoded = decodeBase64Url(payload)
-            val subRegex = """"sub"\s*:\s*"?(\d+)"?""".toRegex()
-            val match = subRegex.find(decoded)
-            match?.groupValues?.get(1)?.toLongOrNull()
-        } catch (_: Exception) {
-            null
-        }
-    }
-
-    private fun decodeBase64Url(input: String): String {
-        val padded = input.replace('-', '+').replace('_', '/')
-        val padding = when (padded.length % 4) {
-            2 -> "$padded=="
-            3 -> "$padded="
-            else -> padded
-        }
-        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-        val bytes = mutableListOf<Byte>()
-        var i = 0
-        while (i < padding.length) {
-            if (padding[i] == '=') break
-            val a = chars.indexOf(padding[i])
-            val b = if (i + 1 < padding.length) chars.indexOf(padding[i + 1]) else 0
-            val c = if (i + 2 < padding.length && padding[i + 2] != '=') chars.indexOf(padding[i + 2]) else 0
-            val d = if (i + 3 < padding.length && padding[i + 3] != '=') chars.indexOf(padding[i + 3]) else 0
-            bytes.add(((a shl 2) or (b shr 4)).toByte())
-            if (i + 2 < padding.length && padding[i + 2] != '=') {
-                bytes.add((((b and 0xF) shl 4) or (c shr 2)).toByte())
-            }
-            if (i + 3 < padding.length && padding[i + 3] != '=') {
-                bytes.add((((c and 0x3) shl 6) or d).toByte())
-            }
-            i += 4
-        }
-        return bytes.toByteArray().decodeToString()
     }
 }

@@ -1,6 +1,8 @@
 package controller.admin.dept
 
+import controller.admin.dept.dto.CreateDeptRequest
 import controller.admin.dept.dto.DeptVO
+import controller.admin.dept.dto.UpdateDeptRequest
 import model.Dept
 import table.DeptTable
 import neton.core.annotations.*
@@ -41,21 +43,38 @@ class DeptController {
 
     @Post("/create")
     @Permission("system:dept:create")
-    suspend fun create(@Body dept: Dept): Long {
-        return DeptTable.insert(dept).id
+    suspend fun create(@Body request: CreateDeptRequest): Long {
+        return DeptTable.insert(
+            Dept(
+                name = request.name,
+                parentId = request.parentId,
+                sort = request.sort,
+                leaderUserId = request.leaderUserId,
+                status = request.status
+            )
+        ).id
     }
 
     @Put("/update")
     @Permission("system:dept:update")
-    suspend fun update(@Body dept: Dept) {
-        DeptTable.get(dept.id)
+    suspend fun update(@Body request: UpdateDeptRequest) {
+        DeptTable.get(request.id)
             ?: throw NotFoundException("Department not found")
 
-        if (dept.parentId == dept.id) {
+        if (request.parentId == request.id) {
             throw BadRequestException("Parent department cannot be itself")
         }
 
-        DeptTable.update(dept)
+        DeptTable.update(
+            Dept(
+                id = request.id,
+                name = request.name,
+                parentId = request.parentId,
+                sort = request.sort,
+                leaderUserId = request.leaderUserId,
+                status = request.status
+            )
+        )
     }
 
     @Delete("/delete/{id}")

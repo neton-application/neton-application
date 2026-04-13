@@ -1,6 +1,8 @@
 package controller.admin.dict
 
+import controller.admin.dict.dto.CreateDictDataRequest
 import controller.admin.dict.dto.DictDataVO
+import controller.admin.dict.dto.UpdateDictDataRequest
 import dto.PageResponse
 import logic.DictLogic
 import model.DictData
@@ -43,14 +45,33 @@ class DictDataController(
 
     @Post("/create")
     @Permission("system:dict:create")
-    suspend fun create(@Body dictData: DictData): Long {
-        return dictLogic.createDictData(dictData)
+    suspend fun create(@Body request: CreateDictDataRequest): Long {
+        return dictLogic.createDictData(
+            DictData(
+                dictType = request.dictType,
+                label = request.label,
+                value = request.value,
+                sort = request.sort,
+                status = request.status,
+                remark = request.remark
+            )
+        )
     }
 
     @Put("/update")
     @Permission("system:dict:update")
-    suspend fun update(@Body dictData: DictData) {
-        dictLogic.updateDictData(dictData)
+    suspend fun update(@Body request: UpdateDictDataRequest) {
+        dictLogic.updateDictData(
+            DictData(
+                id = request.id,
+                dictType = request.dictType,
+                label = request.label,
+                value = request.value,
+                sort = request.sort,
+                status = request.status,
+                remark = request.remark
+            )
+        )
     }
 
     @Delete("/delete/{id}")

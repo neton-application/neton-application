@@ -1,6 +1,8 @@
 package controller.admin.file
 
+import controller.admin.file.dto.CreateFileConfigRequest
 import controller.admin.file.dto.FileConfigVO
+import controller.admin.file.dto.UpdateFileConfigRequest
 import logic.FileLogic
 import model.FileConfig
 import neton.core.annotations.Controller
@@ -23,26 +25,26 @@ class FileConfigController(
 
     @Post("/create")
     @Permission("infra:file-config:create")
-    suspend fun create(@Body vo: FileConfigVO): Long {
+    suspend fun create(@Body request: CreateFileConfigRequest): Long {
         val fileConfig = FileConfig(
-            name = vo.name ?: "",
-            storage = vo.storage ?: 0,
+            name = request.name,
+            storage = request.storage,
             config = "",
-            master = vo.master ?: 0,
-            remark = vo.remark
+            master = request.master,
+            remark = request.remark
         )
         return fileLogic.createFileConfig(fileConfig)
     }
 
     @Put("/update")
     @Permission("infra:file-config:update")
-    suspend fun update(@Body vo: FileConfigVO) {
-        val existing = fileLogic.getFileConfig(vo.id) ?: throw NotFoundException("File config not found")
+    suspend fun update(@Body request: UpdateFileConfigRequest) {
+        val existing = fileLogic.getFileConfig(request.id) ?: throw NotFoundException("File config not found")
         val fileConfig = existing.copy(
-            name = vo.name ?: existing.name,
-            storage = vo.storage ?: existing.storage,
-            master = vo.master ?: existing.master,
-            remark = vo.remark ?: existing.remark
+            name = request.name,
+            storage = request.storage,
+            master = request.master,
+            remark = request.remark
         )
         fileLogic.updateFileConfig(fileConfig)
     }

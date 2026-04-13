@@ -5,6 +5,11 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import model.MessageChannel
+import neton.validation.annotations.Max
+import neton.validation.annotations.Min
+import neton.validation.annotations.NotBlank
+import neton.validation.annotations.Pattern
+import neton.validation.annotations.Size
 
 @Serializable
 data class MailAccountVO(
@@ -79,3 +84,72 @@ data class MailAccountVO(
         }
     }
 }
+
+@Serializable
+data class CreateMailAccountRequest(
+    @property:NotBlank
+    @property:Pattern("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
+    val mail: String,
+
+    @property:NotBlank
+    @property:Size(min = 1, max = 128)
+    val username: String,
+
+    @property:NotBlank
+    @property:Size(min = 1, max = 255)
+    val password: String,
+
+    @property:NotBlank
+    @property:Size(min = 1, max = 255)
+    val host: String,
+
+    @property:Min(1)
+    @property:Max(65535)
+    val port: Int = 465,
+
+    val sslEnable: Boolean = true,
+    val starttlsEnable: Boolean = false,
+
+    @property:Min(0)
+    @property:Max(1)
+    val status: Int = 1,
+
+    @property:Size(min = 0, max = 255)
+    val remark: String? = null
+)
+
+@Serializable
+data class UpdateMailAccountRequest(
+    @property:Min(1)
+    val id: Long,
+
+    @property:NotBlank
+    @property:Pattern("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$")
+    val mail: String,
+
+    @property:NotBlank
+    @property:Size(min = 1, max = 128)
+    val username: String,
+
+    @property:NotBlank
+    @property:Size(min = 1, max = 255)
+    val password: String,
+
+    @property:NotBlank
+    @property:Size(min = 1, max = 255)
+    val host: String,
+
+    @property:Min(1)
+    @property:Max(65535)
+    val port: Int = 465,
+
+    val sslEnable: Boolean = true,
+    val starttlsEnable: Boolean = false,
+
+    @property:Min(0)
+    @property:Max(1)
+    val status: Int = 1,
+
+    @property:Size(min = 0, max = 255)
+    val remark: String? = null
+)

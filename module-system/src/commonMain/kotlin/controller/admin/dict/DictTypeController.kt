@@ -1,6 +1,8 @@
 package controller.admin.dict
 
+import controller.admin.dict.dto.CreateDictTypeRequest
 import controller.admin.dict.dto.DictTypeVO
+import controller.admin.dict.dto.UpdateDictTypeRequest
 import dto.PageResponse
 import logic.DictLogic
 import model.DictType
@@ -37,14 +39,29 @@ class DictTypeController(
 
     @Post("/create")
     @Permission("system:dict:create")
-    suspend fun create(@Body dictType: DictType): Long {
-        return dictLogic.createDictType(dictType)
+    suspend fun create(@Body request: CreateDictTypeRequest): Long {
+        return dictLogic.createDictType(
+            DictType(
+                name = request.name,
+                type = request.type,
+                status = request.status,
+                remark = request.remark
+            )
+        )
     }
 
     @Put("/update")
     @Permission("system:dict:update")
-    suspend fun update(@Body dictType: DictType) {
-        dictLogic.updateDictType(dictType)
+    suspend fun update(@Body request: UpdateDictTypeRequest) {
+        dictLogic.updateDictType(
+            DictType(
+                id = request.id,
+                name = request.name,
+                type = request.type,
+                status = request.status,
+                remark = request.remark
+            )
+        )
     }
 
     @Delete("/delete/{id}")
