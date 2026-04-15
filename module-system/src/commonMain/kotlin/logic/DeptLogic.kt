@@ -80,7 +80,7 @@ class DeptLogic(
     }
 
     suspend fun deleteList(ids: List<Long>) {
-        ids.forEach { DeptTable.destroy(it) }
+        ids.forEach { delete(it) }
     }
 
     private fun buildTree(depts: List<Dept>, parentId: Long): List<DeptVO> {

@@ -29,6 +29,8 @@ fun main(args: Array<String>) {
 
         security { }
 
+        // routing { } 已内置限流能力（Redis 优先，无 Redis 降级本地内存）
+        // @RateLimit 注解标注的接口将自动生效
         routing { }
 
         modules(

@@ -7,6 +7,7 @@ import controller.admin.auth.dto.SmsLoginRequest
 import controller.admin.auth.dto.SendSmsCodeRequest
 import controller.admin.auth.dto.ResetPasswordRequest
 import controller.admin.auth.dto.SocialLoginRequest
+import controller.admin.auth.dto.RefreshTokenRequest
 import controller.admin.auth.dto.SocialRedirectVO
 import logic.AuthLogic
 import logic.PermissionLogic
@@ -21,6 +22,7 @@ class AuthController(
 
     @Post("/login")
     @AllowAnonymous
+    @RateLimit(windowSeconds = 300, maxRequests = 10, scope = RateLimitScope.IP, message = "Login attempts exceeded, please try again later")
     suspend fun login(@Body request: LoginRequest): LoginResponse {
         return authLogic.login(request)
     }
@@ -33,8 +35,8 @@ class AuthController(
 
     @Post("/refresh-token")
     @AllowAnonymous
-    suspend fun refreshToken(@Query refreshToken: String): LoginResponse {
-        return authLogic.refreshToken(refreshToken)
+    suspend fun refreshToken(@Body request: RefreshTokenRequest): LoginResponse {
+        return authLogic.refreshToken(request.refreshToken)
     }
 
     @Get("/get-permission-info")
@@ -45,18 +47,21 @@ class AuthController(
 
     @Post("/sms-login")
     @AllowAnonymous
+    @RateLimit(windowSeconds = 60, maxRequests = 5, scope = RateLimitScope.IP, message = "SMS login attempts exceeded, please try again later")
     suspend fun smsLogin(@Body request: SmsLoginRequest): LoginResponse {
         return authLogic.smsLogin(request.mobile, request.smsCode)
     }
 
     @Post("/send-sms-code")
     @AllowAnonymous
+    @RateLimit(windowSeconds = 60, maxRequests = 5, scope = RateLimitScope.IP, message = "SMS code sending limit exceeded, please try again later")
     suspend fun sendSmsCode(@Body request: SendSmsCodeRequest) {
         authLogic.sendSmsCode(request.mobile, request.scene)
     }
 
     @Post("/reset-password")
     @AllowAnonymous
+    @RateLimit(windowSeconds = 300, maxRequests = 5, scope = RateLimitScope.IP, message = "Password reset attempts exceeded, please try again later")
     suspend fun resetPassword(@Body request: ResetPasswordRequest) {
         authLogic.resetPassword(request.mobile, request.smsCode, request.newPassword)
     }
@@ -70,6 +75,7 @@ class AuthController(
 
     @Post("/social-login")
     @AllowAnonymous
+    @RateLimit(windowSeconds = 300, maxRequests = 10, scope = RateLimitScope.IP, message = "Social login attempts exceeded, please try again later")
     suspend fun socialLogin(@Body request: SocialLoginRequest): LoginResponse {
         return authLogic.socialLogin(request.socialType, request.code, request.redirectUri ?: "")
     }

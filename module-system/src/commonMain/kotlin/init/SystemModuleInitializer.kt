@@ -60,6 +60,8 @@ object SystemModuleInitializer : ModuleInitializer {
         ctx.bind(PermissionLogic::class, PermissionLogic(loggerFactory.get("logic.permission")))
         ctx.bind(DictLogic::class, DictLogic(loggerFactory.get("logic.dict"), infra.SimpleCache()))
         ctx.bind(LogLogic::class, LogLogic(loggerFactory.get("logic.log")))
+        ctx.bind(DeptLogic::class, DeptLogic(loggerFactory.get("logic.dept")))
+        ctx.bind(PostLogic::class, PostLogic(loggerFactory.get("logic.post")))
 
         // 注册 KSP 生成的路由
         neton.module.system.generated.SystemRouteInitializer.initialize(ctx)

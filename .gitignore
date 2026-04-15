@@ -28,6 +28,7 @@ logs/
 # Local config
 local.properties
 secrets.properties
+**/config/application.local.conf
 
 # Database files
 *.db
