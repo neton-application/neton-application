@@ -8,6 +8,8 @@
 > 安全整改执行请同时参考 [SECURITY_REMEDIATION_PLAN.md](./SECURITY_REMEDIATION_PLAN.md)。
 >
 > 模块模板规范请同时参考 [docs/module-template-spec.md](./docs/module-template-spec.md)。
+>
+> 应用层 RBAC 实现规范（User/Role/Menu/权限串/通配/super_admin/缓存/RouteGroup 命名空间）请参考 [rbac-spec.md](./rbac-spec.md)。
 
 ---
 
