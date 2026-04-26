@@ -23,6 +23,10 @@ fun main(args: Array<String>) {
 
         http { }
 
+        // database 启动只做连接探活与 tableRegistry 注入。
+        // 严禁在此或任何 ModuleInitializer 中调用 ensureTable()/ALTER 等 schema 变更逻辑。
+        // schema 演进的唯一权威路径是手动 SQL 脚本（sql/{dialect}/V*.sql）。
+        // 详见架构边界：neton-docs/docs/spec/migration.md
         database {
             tableRegistry = tableRegistryBuilder.build()
         }
