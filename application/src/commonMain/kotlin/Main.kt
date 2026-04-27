@@ -5,6 +5,7 @@ import neton.database.database
 import neton.http.http
 import neton.routing.routing
 import neton.security.security
+import security.WildcardPermissionEvaluator
 
 import init.SystemModuleInitializer
 import init.InfraModuleInitializer
@@ -31,7 +32,12 @@ fun main(args: Array<String>) {
             tableRegistry = tableRegistryBuilder.build()
         }
 
-        security { }
+        security {
+            // 注入应用脚手架的通配权限评估器（rbac-spec §4.2）。
+            // 框架默认 PermissionEvaluator 是精确匹配，不支持 *:*:* 等通配；
+            // 必须由脚手架显式覆盖。
+            setPermissionEvaluator(WildcardPermissionEvaluator())
+        }
 
         // routing { } 已内置限流能力（Redis 优先，无 Redis 降级本地内存）
         // @RateLimit 注解标注的接口将自动生效

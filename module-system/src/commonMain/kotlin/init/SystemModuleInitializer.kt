@@ -6,6 +6,9 @@ import neton.core.module.ModuleInitializer
 import neton.logging.LoggerFactory
 import neton.security.jwt.JwtAuthenticatorV1
 import config.buildJwtAuthenticator
+import config.loadSuperAdminCodes
+import security.CodeMatchSuperAdminEvaluator
+import security.SuperAdminEvaluator
 
 // models
 import model.*
@@ -30,6 +33,14 @@ object SystemModuleInitializer : ModuleInitializer {
         // ===== 创建共享服务 =====
         val jwt = ctx.getOrNull(JwtAuthenticatorV1::class) ?: buildJwtAuthenticator(ctx)
         ctx.bind(JwtAuthenticatorV1::class, jwt)
+
+        // SuperAdminEvaluator —— rbac-spec §7。
+        // 启动日志只打 count，不打具体 codes（避免泄露安全配置）。
+        val superAdminCodes = loadSuperAdminCodes(ctx)
+        val securityLog = loggerFactory.get("security")
+        securityLog.info("security.super_admin_codes.loaded count=${superAdminCodes.size}")
+        val superAdminEvaluator: SuperAdminEvaluator = CodeMatchSuperAdminEvaluator(superAdminCodes)
+        ctx.bind(SuperAdminEvaluator::class, superAdminEvaluator)
 
         // ===== 创建 Provider =====
         val smsProvider = SmsProvider(loggerFactory.get("provider.sms"))
@@ -57,7 +68,7 @@ object SystemModuleInitializer : ModuleInitializer {
         ctx.bind(UserLogic::class, UserLogic(loggerFactory.get("logic.user")))
         ctx.bind(RoleLogic::class, RoleLogic(loggerFactory.get("logic.role")))
         ctx.bind(MenuLogic::class, MenuLogic(loggerFactory.get("logic.menu")))
-        ctx.bind(PermissionLogic::class, PermissionLogic(loggerFactory.get("logic.permission")))
+        ctx.bind(PermissionLogic::class, PermissionLogic(loggerFactory.get("logic.permission"), superAdminEvaluator))
         ctx.bind(DictLogic::class, DictLogic(loggerFactory.get("logic.dict"), infra.SimpleCache()))
         ctx.bind(LogLogic::class, LogLogic(loggerFactory.get("logic.log")))
         ctx.bind(DeptLogic::class, DeptLogic(loggerFactory.get("logic.dept")))

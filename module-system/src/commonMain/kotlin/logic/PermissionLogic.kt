@@ -8,6 +8,7 @@ import model.Menu
 import model.Role
 import model.RoleMenu
 import model.UserRole
+import security.SuperAdminEvaluator
 import table.MenuTable
 import table.RoleMenuTable
 import table.RoleTable
@@ -17,10 +18,9 @@ import neton.core.http.NotFoundException
 import neton.logging.Logger
 import neton.database.dsl.*
 
-private const val SUPER_ADMIN_ROLE = "super_admin"
-
 class PermissionLogic(
-    private val log: Logger
+    private val log: Logger,
+    private val superAdminEvaluator: SuperAdminEvaluator
 ) {
 
     suspend fun getPermissionInfo(userId: Long): PermissionInfoVO {
@@ -46,7 +46,7 @@ class PermissionLogic(
         } else emptyList()
 
         val roleCodes = roles.map { it.code }
-        val isSuperAdmin = SUPER_ADMIN_ROLE in roleCodes
+        val isSuperAdmin = superAdminEvaluator.isSuperAdmin(roleCodes.toSet())
 
         // super_admin: return all menus and wildcard permission
         if (isSuperAdmin) {
