@@ -12,6 +12,7 @@ import init.InfraModuleInitializer
 import init.MemberModuleInitializer
 import init.PaymentModuleInitializer
 import init.PlatformModuleInitializer
+import init.PrivchatModuleInitializer
 
 fun main(args: Array<String>) {
     val tableRegistryBuilder = TableRegistryBuilder()
@@ -46,6 +47,7 @@ fun main(args: Array<String>) {
         modules(
             SystemModuleInitializer,
             InfraModuleInitializer,
+            PrivchatModuleInitializer,
             MemberModuleInitializer,
             PaymentModuleInitializer,
             PlatformModuleInitializer,

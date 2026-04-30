@@ -33,6 +33,7 @@ kotlin {
                 implementation("com.netonstream.app:module-member")
                 implementation("com.netonstream.app:module-payment")
                 implementation("com.netonstream.app:module-platform")
+                implementation("com.netonstream.privchat:main")
 
                 // 框架依赖
                 implementation("com.netonstream:neton-core")

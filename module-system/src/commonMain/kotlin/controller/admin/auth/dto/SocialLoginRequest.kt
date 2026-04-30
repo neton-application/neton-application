@@ -15,5 +15,7 @@ data class SocialLoginRequest(
     val code: String,
 
     @property:Size(min = 1, max = 1024)
-    val redirectUri: String? = null
+    val redirectUri: String? = null,
+
+    val device: LoginDeviceInfo? = null,
 )
