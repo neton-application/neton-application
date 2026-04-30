@@ -54,7 +54,8 @@ object SystemModuleInitializer : ModuleInitializer {
         // ===== 绑定 Logic =====
         val messageChannelLogic = MessageChannelLogic(loggerFactory.get("logic.message-channel"), messageProviders)
         val messageTemplateLogic = MessageTemplateLogic(loggerFactory.get("logic.message-template"))
-        val messageSendLogic = MessageSendLogic(loggerFactory.get("logic.message-send"), messageChannelLogic, messageTemplateLogic)
+        val redis = ctx.getOrNull(neton.redis.RedisClient::class)
+        val messageSendLogic = MessageSendLogic(loggerFactory.get("logic.message-send"), messageChannelLogic, messageTemplateLogic, redis)
         val socialUserLogic = SocialUserLogic(loggerFactory.get("logic.social-user"), socialProviders)
         val notificationTemplateLogic = NotificationTemplateLogic(loggerFactory.get("logic.notification-template"), messageSendLogic)
 

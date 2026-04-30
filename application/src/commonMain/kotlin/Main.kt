@@ -3,6 +3,7 @@ import neton.core.Neton
 import neton.core.generated.GeneratedNetonConfigRegistry
 import neton.database.database
 import neton.http.http
+import neton.redis.redis
 import neton.routing.routing
 import neton.security.security
 import security.WildcardPermissionEvaluator
@@ -39,6 +40,10 @@ fun main(args: Array<String>) {
             // 必须由脚手架显式覆盖。
             setPermissionEvaluator(WildcardPermissionEvaluator())
         }
+
+        // Redis 装载（SMS code 暂存、限流、token 黑名单等都需要）。
+        // 配置文件 config/redis.conf；缺省 host=127.0.0.1 port=6379。
+        redis { }
 
         // routing { } 已内置限流能力（Redis 优先，无 Redis 降级本地内存）
         // @RateLimit 注解标注的接口将自动生效
