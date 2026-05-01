@@ -60,10 +60,12 @@ afterEvaluate {
     kotlin.sourceSets.named("commonMain") {
         kotlin.srcDir(kspOut)
     }
-    val ss = kotlin.sourceSets.findByName("macosArm64Main")
-    if (ss != null) {
-        val filtered = ss.kotlin.srcDirs.filter { !it.path.contains("generated/ksp") }
-        if (filtered.size < ss.kotlin.srcDirs.size) ss.kotlin.setSrcDirs(filtered)
+    // 各 target 都过滤掉 generated/ksp（commonMain 已统一引入 macosArm64 输出，避免重定义）。
+    listOf("macosArm64Main", "linuxX64Main", "linuxArm64Main", "mingwX64Main").forEach { name ->
+        kotlin.sourceSets.findByName(name)?.let { ss ->
+            val filtered = ss.kotlin.srcDirs.filter { !it.path.contains("generated/ksp") }
+            if (filtered.size < ss.kotlin.srcDirs.size) ss.kotlin.setSrcDirs(filtered)
+        }
     }
 }
 
@@ -71,5 +73,10 @@ tasks.matching { it.name == "compileCommonMainKotlinMetadata" }.configureEach {
     dependsOn("kspKotlinMacosArm64")
 }
 tasks.matching { it.name.matches(Regex("compileKotlin(MacosArm64|LinuxX64|LinuxArm64|MingwX64)")) }.configureEach {
+    dependsOn("kspKotlinMacosArm64")
+}
+// 非 macosArm64 的 KSP 任务也读 macosArm64 的 generated/ksp 输出（commonMain 共享），
+// 必须显式声明依赖，否则 Gradle 8 严格模式把 ./gradlew build 判为 race + FAILED。
+tasks.matching { it.name.matches(Regex("kspKotlin(LinuxX64|LinuxArm64|MingwX64)")) }.configureEach {
     dependsOn("kspKotlinMacosArm64")
 }
