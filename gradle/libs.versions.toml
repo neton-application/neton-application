@@ -3,10 +3,15 @@ kotlin = "2.3.10"
 ksp = "2.3.5"
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization = "1.10.0"
+cryptography-kotlin = "0.6.0"
 
 [libraries]
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+# cryptography-kotlin（KMP crypto，Native 走 CommonCrypto / OpenSSL）。
+# 用于 module-infra 的 SHA-256 内容指纹（文件 storage_key 一部分）。
+cryptography-core = { module = "dev.whyoleg.cryptography:cryptography-core", version.ref = "cryptography-kotlin" }
+cryptography-provider-optimal = { module = "dev.whyoleg.cryptography:cryptography-provider-optimal", version.ref = "cryptography-kotlin" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }

@@ -6,6 +6,7 @@ import neton.http.http
 import neton.redis.redis
 import neton.routing.routing
 import neton.security.security
+import neton.storage.storage
 import security.WildcardPermissionEvaluator
 
 import init.SystemModuleInitializer
@@ -44,6 +45,11 @@ fun main(args: Array<String>) {
         // Redis 装载（SMS code 暂存、限流、token 黑名单等都需要）。
         // 配置文件 config/redis.conf；缺省 host=127.0.0.1 port=6379。
         redis { }
+
+        // 文件存储：用户态上传统一走 default source（spec
+        // MODULE_MEMBER_PROFILE_SPEC §4.2）。配置在 config/storage.conf；
+        // 第一版 local，后续切 S3 / OSS 不需要业务代码改动。
+        storage { }
 
         // routing { } 已内置限流能力（Redis 优先，无 Redis 降级本地内存）
         // @RateLimit 注解标注的接口将自动生效
