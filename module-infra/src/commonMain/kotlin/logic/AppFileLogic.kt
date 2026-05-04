@@ -78,7 +78,7 @@ class AppFileLogic(
 
         val sha256Hex = sha256Hex(bytes)
         val ext = extensionFor(mimeType, file.filename)
-        val storageKey = storageKeyOf(businessType, ownerUid, sha256Hex, ext)
+        val storageKey = storageKeyOf(businessType, sha256Hex, ext)
 
         // 幂等：同 owner + same businessType + same sha256 已上传过 → 直接返 existing
         val existing = FileInfoTable.oneWhere {
@@ -152,9 +152,33 @@ class AppFileLogic(
     }
 
     companion object {
-        /** spec §4.2：目录布局脚手架强制 `{businessType}/{ownerUid}/{sha256}.{ext}` */
-        fun storageKeyOf(businessType: String, ownerUid: Long, sha256Hex: String, ext: String): String =
-            "$businessType/$ownerUid/$sha256Hex.$ext"
+        /**
+         * 物理 storage key（spec MODULE_MEMBER_PROFILE_SPEC §4.2）。
+         *
+         * **内容寻址，不带 ownerUid**：
+         *
+         * ```
+         * {businessType}/{sha256[0..2)}/{sha256[2..4)}/{sha256}.{ext}
+         * ```
+         *
+         * 例：`member_avatar/ab/cd/abcdef....png`
+         *
+         * 三个理由：
+         * 1. 多个 owner 上传同一内容 → 共享同一物理对象（去重）；
+         * 2. 大量上传时 sha256 前缀分片让 FS / object store 不会单目录倾斜；
+         * 3. URL 与磁盘路径都不暴露 uid。
+         *
+         * 归属 / 业务关系记录在 `infra_files` 元数据列（owner_uid / business_type / sha256），
+         * 不进物理路径。
+         */
+        fun storageKeyOf(businessType: String, sha256Hex: String, ext: String): String {
+            require(sha256Hex.length >= 4) {
+                "sha256Hex too short for sharding: $sha256Hex"
+            }
+            val p1 = sha256Hex.substring(0, 2)
+            val p2 = sha256Hex.substring(2, 4)
+            return "$businessType/$p1/$p2/$sha256Hex.$ext"
+        }
 
         /** spec §4.2：返给客户端的 URL 永远走 `/app-api/infra/file/get/{fileId}` */
         fun publicUrlOf(fileId: String): String = "/app-api/infra/file/get/$fileId"

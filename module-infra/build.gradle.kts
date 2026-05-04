@@ -38,6 +38,11 @@ kotlin {
                 implementation(libs.cryptography.provider.optimal)
             }
         }
+        commonTest {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
     }
 }
 
