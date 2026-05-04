@@ -34,6 +34,8 @@ kotlin {
                 implementation("com.netonstream:neton-jobs")
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.cryptography.core)
+                implementation(libs.cryptography.provider.optimal)
             }
         }
     }
