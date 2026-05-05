@@ -23,7 +23,7 @@ class WildcardPermissionEvaluatorTest {
     }
 
     private val ctx = object : RequestContext {
-        override val path = "/admin-api/system/user/page"
+        override val path = "/admin/system/user/page"
         override val method = "GET"
         override val headers: Map<String, String> = emptyMap()
         override val routeGroup: String? = "admin-api"

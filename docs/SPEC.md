@@ -343,10 +343,10 @@ curl http://localhost:8080/
 
 ### 8.2 前端开发环境代理
 
-前端开发时通过 Vite 代理将 `/admin-api` 转到后端 `/admin`，避免跨域并统一前缀：
+前端开发时通过 Vite 代理将 `/admin` 转到后端 `/admin`，避免跨域并统一前缀：
 
-- 前端请求：`/admin-api/system/auth/login` → 代理到 `http://127.0.0.1:8080/admin/system/auth/login`
-- 配置见 neton-application-admin 的 `apps/web-antd/vite.config.mts`（proxy `/admin-api` → target 8080，rewrite 为 `/admin`）。
+- 前端请求：`/admin/system/auth/login` → 代理到 `http://127.0.0.1:8080/admin/system/auth/login`
+- 配置见 neton-application-admin 的 `apps/web-antd/vite.config.mts`（proxy `/admin` → target 8080，rewrite 为 `/admin`）。
 
 ### 8.3 联调顺序
 
