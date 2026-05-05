@@ -9,9 +9,9 @@ import neton.database.annotations.CreatedAt
  * 文件元数据（spec MODULE_MEMBER_PROFILE_SPEC §4.2）。
  *
  * 表 `infra_files` 同时承担两类数据：
- * 1. **admin 元数据登记**（旧 `/admin-api/infra/file/upload` 路径）—— `fileId` /
+ * 1. **admin 元数据登记**（旧 `/admin/infra/file/upload` 路径）—— `fileId` /
  *    `ownerUid` / `businessType` / `sha256` / `status` 这五列允许为空 / 默认值
- * 2. **应用唯一用户态上传**（`/app-api/infra/file/upload`，spec §4.2）—— 五列必填
+ * 2. **应用唯一用户态上传**（`/app/infra/file/upload`，spec §4.2）—— 五列必填
  *
  * 用 `fileId` 区分：客户端只看 `fileId`（公开 ID），不暴露自增 `id`。
  */

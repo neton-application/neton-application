@@ -30,7 +30,7 @@ import table.FileInfoTable
  * {basePath}/{businessType}/{ownerUid}/{sha256}.{ext}
  * ```
  *
- * 同样地 url 格式也固定 `/app-api/infra/file/get/{fileId}`，不暴露磁盘路径。
+ * 同样地 url 格式也固定 `/app/infra/file/get/{fileId}`，不暴露磁盘路径。
  */
 class AppFileLogic(
     private val log: Logger,
@@ -180,8 +180,8 @@ class AppFileLogic(
             return "$businessType/$p1/$p2/$sha256Hex.$ext"
         }
 
-        /** spec §4.2：返给客户端的 URL 永远走 `/app-api/infra/file/get/{fileId}` */
-        fun publicUrlOf(fileId: String): String = "/app-api/infra/file/get/$fileId"
+        /** spec §4.2：返给客户端的 URL 永远走 `/app/infra/file/get/{fileId}` */
+        fun publicUrlOf(fileId: String): String = "/app/infra/file/get/$fileId"
 
         private val sha256 = CryptographyProvider.Default.get(SHA256).hasher()
 

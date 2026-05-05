@@ -23,8 +23,8 @@ import neton.core.interfaces.Identity
  *
  * 包路径 `controller.app.infra.file` 让 neton 路由组（按包段匹配 `[[groups]]`，
  * 详 `KtorHttpAdapter.inferRouteGroup`）落到 `app` group，最终挂在
- * `/app-api/infra/file/<path>`。与 `controller.admin.file.FileController`
- * （admin 元数据登记，挂在 `/admin-api/infra/file/<path>`）共存，互不干扰。
+ * `/app/infra/file/<path>`。与 `controller.admin.file.FileController`
+ * （admin 元数据登记，挂在 `/admin/infra/file/<path>`）共存，互不干扰。
  *
  * 端点：
  * - `POST /upload` 接 multipart/form-data file 字节 + businessType

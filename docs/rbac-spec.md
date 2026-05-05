@@ -383,15 +383,15 @@ rbac:permission_info:<userId>
 
 | RouteGroup | 用途 | 权限命名空间约定 |
 |-----------|------|-----------------|
-| `/admin-api` | 管理后台 | 权限串 module 段使用业务模块名（`system` / `member` / `payment` / ...） |
-| `/app-api` | 普通会员前台 | **不使用 `@Permission`**，仅靠登录态（`@RequireAuth`） |
-| `/platform-api` | 第三方开放 API | 不使用 `@Permission`，靠 AppId/AppSecret 签名鉴权（独立体系，与 RBAC 无关） |
+| `/admin` | 管理后台 | 权限串 module 段使用业务模块名（`system` / `member` / `payment` / ...） |
+| `/app` | 普通会员前台 | **不使用 `@Permission`**，仅靠登录态（`@RequireAuth`） |
+| `/platform` | 第三方开放 API | 不使用 `@Permission`，靠 AppId/AppSecret 签名鉴权（独立体系，与 RBAC 无关） |
 
 ### 9.2 命名空间规则
 
-- `@Permission("xxx")` **只允许**用在 `/admin-api` 路由组的控制器
-- `/app-api` 控制器使用 `@RequireAuth` 表达"需登录"，不引入权限粒度
-- `/platform-api` 控制器使用专门的客户端身份认证机制，不进入本 RBAC 体系
+- `@Permission("xxx")` **只允许**用在 `/admin` 路由组的控制器
+- `/app` 控制器使用 `@RequireAuth` 表达"需登录"，不引入权限粒度
+- `/platform` 控制器使用专门的客户端身份认证机制，不进入本 RBAC 体系
 
 ### 9.3 检查约束
 
@@ -485,7 +485,7 @@ CI/lint 阶段应当检查：
 假设新增"工单"模块 `ticket`：
 
 ```kotlin
-@Controller("/admin-api/ticket")
+@Controller("/admin/ticket")
 class TicketController(...) {
     @Get("/page")
     @Permission("ticket:ticket:page")
