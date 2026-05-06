@@ -71,9 +71,14 @@ class MessageSendLogic(
     /**
      * Send a verification code via SMS. Generates a 6-digit code,
      * stores it in Redis with TTL, and sends via the SMS channel.
+     *
+     * 无论是否配置了 SMS channel / template，都会写一条 [MessageLog] 记录，便于后台
+     * `/system/sms-log` 审计查询。dev / 无模板场景：channelId=0，content 包含明文
+     * code 以便排查（生产环境应配置真实 channel + 模板）。
      */
     suspend fun sendVerificationCode(mobile: String, scene: String = "login"): Boolean {
         val code = Random.nextInt(100000, 999999).toString()
+        val templateCode = "sms_verification_$scene"
 
         // Store code in Redis
         if (redis != null) {
@@ -83,12 +88,12 @@ class MessageSendLogic(
             log.warn("sms.code.redis_unavailable", mapOf("mobile" to maskMobile(mobile), "scene" to scene))
         }
 
-        // Try to send via template if configured
+        // Try to send via template if configured (production path)
         try {
-            val template = messageTemplateLogic.getByCode("sms_verification_$scene")
+            val template = messageTemplateLogic.getByCode(templateCode)
             if (template != null) {
                 return sendByTemplate(
-                    templateCode = "sms_verification_$scene",
+                    templateCode = templateCode,
                     receiver = mobile,
                     params = mapOf("code" to code)
                 )
@@ -96,6 +101,21 @@ class MessageSendLogic(
         } catch (e: Exception) {
             log.warn("No SMS template configured for scene=$scene, code stored in Redis only")
         }
+
+        // Fallback / dev path: 无 channel + 模板时也落 message_log，便于 `/system/sms-log`
+        // 后台审计能看到验证码发送记录。channelId=0 + sendStatus=0 标记 dev mode。
+        logMessage(
+            channelId = 0L,
+            templateId = null,
+            templateCode = templateCode,
+            receiver = mobile,
+            content = "[DEV] code=$code",
+            params = mapOf("code" to code, "scene" to scene).toString(),
+            sendStatus = 0,
+            errorMessage = null,
+            userId = null,
+            userType = 0,
+        )
 
         return true
     }
@@ -137,7 +157,7 @@ class MessageSendLogic(
             content = content,
             params = params,
             sendStatus = sendStatus,
-            sendTime = Clock.System.now().toString(),
+            sendTime = Clock.System.now().toEpochMilliseconds(),
             errorMessage = errorMessage,
             userId = userId,
             userType = userType

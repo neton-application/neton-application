@@ -12,9 +12,11 @@ data class MessageLogVO(
     val content: String? = null,
     val params: String? = null,
     val sendStatus: Int = 0,
-    val sendTime: String? = null,
+    /** epoch millis */
+    val sendTime: Long? = null,
     val errorMessage: String? = null,
     val userId: Long? = null,
     val userType: Int = 0,
-    val createdAt: String? = null
+    /** epoch millis */
+    val createdAt: Long = 0,
 )

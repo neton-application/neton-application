@@ -23,18 +23,24 @@ class SmsLogController {
         @Query receiver: String? = null,
         @Query sendStatus: Int? = null
     ): PageResponse<MessageLogVO> {
+        // SMS-typed records 来自两类：
+        // 1. 配置了 SMS channel 的真实发送（channelId in smsChannelIds）
+        // 2. 无 channel 配置时由 [MessageSendLogic.sendVerificationCode] 写入的 dev / fallback
+        //    记录（templateCode 以 `sms_` 开头）
+        // 无论 SMS channel 表是否为空，过滤逻辑都覆盖这两类，保证后台始终能看到发码记录。
         val smsChannelIds = MessageChannelTable.query {
             where { MessageChannel::type eq "sms" }
         }.list().map { it.id }
 
-        if (smsChannelIds.isEmpty()) {
-            return PageResponse(list = emptyList(), total = 0, page = pageNo, size = pageSize, totalPages = 0)
-        }
-
         val result = MessageLogTable.query {
             where {
                 and(
-                    MessageLog::channelId `in` smsChannelIds,
+                    or(
+                        // smsChannelIds 为空时跳过这一支（PredicateScope.or 会过滤掉 True），
+                        // 退化为只按 sms_ templateCode 前缀匹配 dev / fallback 记录。
+                        if (smsChannelIds.isNotEmpty()) MessageLog::channelId `in` smsChannelIds else Predicate.True,
+                        MessageLog::templateCode like "sms_%",
+                    ),
                     whenPresent(channelId) { MessageLog::channelId eq it },
                     whenNotBlank(templateCode) { MessageLog::templateCode eq it },
                     whenNotBlank(receiver) { MessageLog::receiver like "%$it%" },

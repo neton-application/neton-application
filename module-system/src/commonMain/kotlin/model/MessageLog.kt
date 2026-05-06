@@ -17,10 +17,11 @@ data class MessageLog(
     val content: String? = null,
     val params: String? = null,
     val sendStatus: Int = 0,
-    val sendTime: String? = null,
+    /** epoch millis；列类型 bigint（spec 与 system_message_logs.send_time 对齐） */
+    val sendTime: Long? = null,
     val errorMessage: String? = null,
     val userId: Long? = null,
     val userType: Int = 0,
     @CreatedAt
-    val createdAt: String? = null
+    val createdAt: Long = 0,
 )
