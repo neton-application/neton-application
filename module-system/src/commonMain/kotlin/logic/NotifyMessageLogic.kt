@@ -111,7 +111,7 @@ class NotifyMessageLogic(
                     NotifyMessage::readStatus eq 0
                 )
             }
-        }.count()
+        }.list().size.toLong()
     }
 
     private fun NotifyMessage.toVO() = NotifyMessageVO(
