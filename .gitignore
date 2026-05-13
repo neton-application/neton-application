@@ -34,3 +34,6 @@ secrets.properties
 *.db
 *.sqlite
 *.sqlite3
+
+# Runtime upload storage (user-uploaded files, not source)
+application/storage/
