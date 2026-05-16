@@ -2,6 +2,7 @@ import com.netonstream.privchat.application.module.privchat.client.PrivchatServi
 import com.netonstream.privchat.application.module.privchat.client.PrivchatServiceClientImpl
 import infra.TableRegistryBuilder
 import neton.core.Neton
+import neton.core.component.cors
 import neton.core.config.ConfigLoader
 import neton.core.generated.GeneratedNetonConfigRegistry
 import neton.database.database
@@ -12,6 +13,7 @@ import neton.security.security
 import neton.storage.storage
 import security.WildcardPermissionEvaluator
 
+import init.GameModuleInitializer
 import init.SystemModuleInitializer
 import init.InfraModuleInitializer
 import init.MemberModuleInitializer
@@ -35,7 +37,32 @@ fun main(args: Array<String>) {
         // 预绑定 PrivchatServiceClient（spec MODULE_PRIVCHAT §5）
         bind(PrivchatServiceClient::class, privchatServiceClient)
 
-        http { }
+        // CORS via DSL —— neton 的 TomlParser 不支持 array 语法，
+        // application.conf 里写 [cors] allowedOrigins = [...] 会被吞掉
+        // （详见 HttpComponent.kt:36）。这里走 DSL 绕开 TOML。
+        // 需要新增 origin 时直接往下面加。生产环境收紧到正式域名。
+        http {
+            cors {
+                allowedOrigins = listOf(
+                    "http://localhost:7456",
+                    "http://localhost:7457",
+                    "http://localhost:7458",
+                    "http://localhost:7459",
+                    "http://localhost:7460",
+                    "http://127.0.0.1:7456",
+                    "http://127.0.0.1:7457",
+                    "http://127.0.0.1:7458",
+                    "http://127.0.0.1:7459",
+                    "http://127.0.0.1:7460",
+                    "http://localhost:5173",
+                    "http://127.0.0.1:5173",
+                )
+                allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                allowedHeaders = listOf("*")
+                allowCredentials = false
+                maxAgeSeconds = 3600
+            }
+        }
 
         // database 启动只做连接探活与 tableRegistry 注入。
         // 严禁在此或任何 ModuleInitializer 中调用 ensureTable()/ALTER 等 schema 变更逻辑。
@@ -72,6 +99,7 @@ fun main(args: Array<String>) {
             MemberModuleInitializer,
             PaymentModuleInitializer,
             PlatformModuleInitializer,
+            GameModuleInitializer,
         )
     }
 }
