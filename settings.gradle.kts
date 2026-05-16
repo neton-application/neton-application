@@ -15,6 +15,7 @@ includeBuild("../neton")
 includeBuild("../privchat-application-module-member")
 includeBuild("../privchat-application-module-payment")
 includeBuild("../privchat-application-module-platform")
+includeBuild("../privchat-application-module-game")
 
 // PrivChat 官方开发的 Neton Application 独立模块（无 Neton 上游）
 // 详见 spec/07-application/MODULE_PRIVCHAT_SPEC.md
