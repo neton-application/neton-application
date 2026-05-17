@@ -13,6 +13,7 @@ import neton.security.security
 import neton.storage.storage
 import security.WildcardPermissionEvaluator
 
+import init.AssistantModuleInitializer
 import init.GameModuleInitializer
 import init.SystemModuleInitializer
 import init.InfraModuleInitializer
@@ -100,6 +101,7 @@ fun main(args: Array<String>) {
             PaymentModuleInitializer,
             PlatformModuleInitializer,
             GameModuleInitializer,
+            AssistantModuleInitializer,
         )
     }
 }
