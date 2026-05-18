@@ -38,26 +38,19 @@ fun main(args: Array<String>) {
         // 预绑定 PrivchatServiceClient（spec MODULE_PRIVCHAT §5）
         bind(PrivchatServiceClient::class, privchatServiceClient)
 
-        // CORS via DSL —— neton 的 TomlParser 不支持 array 语法，
-        // application.conf 里写 [cors] allowedOrigins = [...] 会被吞掉
-        // （详见 HttpComponent.kt:36）。这里走 DSL 绕开 TOML。
-        // 需要新增 origin 时直接往下面加。生产环境收紧到正式域名。
+        // CORS via DSL —— neton 的 TomlParser 不支持 array 语法，application.conf
+        // 里写 [cors] allowedOrigins = [...] 会被吞掉（详见 HttpComponent.kt:36），
+        // 走 DSL 绕开 TOML。
+        //
+        // **dev 默认放开所有 origin**（admin 5666 / privchat-app 7456-7460 /
+        // privchat-web 5173 / cocos 7458 等多前端端口频繁变动，逐一维护 allowlist
+        // 持续踩 CORS）。allowCredentials=false 时 `*` 合法。
+        //
+        // **生产部署必须收紧**到正式域名白名单 —— 改这里之前先确认 prod 配置不是
+        // 这条路径（理论上 prod 走另一份配置 / 反向代理拦下）。
         http {
             cors {
-                allowedOrigins = listOf(
-                    "http://localhost:7456",
-                    "http://localhost:7457",
-                    "http://localhost:7458",
-                    "http://localhost:7459",
-                    "http://localhost:7460",
-                    "http://127.0.0.1:7456",
-                    "http://127.0.0.1:7457",
-                    "http://127.0.0.1:7458",
-                    "http://127.0.0.1:7459",
-                    "http://127.0.0.1:7460",
-                    "http://localhost:5173",
-                    "http://127.0.0.1:5173",
-                )
+                allowedOrigins = listOf("*")
                 allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
                 allowedHeaders = listOf("*")
                 allowCredentials = false
