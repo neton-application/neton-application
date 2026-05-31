@@ -3,6 +3,7 @@ import com.netonstream.privchat.application.module.privchat.client.PrivchatServi
 import infra.TableRegistryBuilder
 import kotlin.system.exitProcess
 import migration.MigrationCommandRunner
+import migration.MigrationStartupPrecheck
 import neton.core.Neton
 import neton.core.component.cors
 import neton.core.config.ConfigLoader
@@ -42,6 +43,25 @@ fun main(args: Array<String>) {
             AssistantModuleInitializer,
         ))
         exitProcess(code)
+    }
+
+    // ====== Startup migration precheck (SPEC §0.6 红线) ======
+    // 正常启动绝不自动 migrate。检查 pending/failed/mismatch,有就 fail-fast。
+    // 与上方 migrate 子命令共用同一份模块列表 + ApplicationMigrationSources.collect。
+    MigrationStartupPrecheck.check(args, listOf(
+        SystemModuleInitializer,
+        InfraModuleInitializer,
+        PrivchatModuleInitializer,
+        MemberModuleInitializer,
+        PaymentModuleInitializer,
+        PlatformModuleInitializer,
+        GameModuleInitializer,
+        AssistantModuleInitializer,
+    ))?.let { reason ->
+        println("================== STARTUP ABORTED ==================")
+        println(reason.trimEnd())
+        println("=====================================================")
+        exitProcess(1)
     }
 
     val tableRegistryBuilder = TableRegistryBuilder()
