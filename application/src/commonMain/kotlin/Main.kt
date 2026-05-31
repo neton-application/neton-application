@@ -1,6 +1,8 @@
 import com.netonstream.privchat.application.module.privchat.client.PrivchatServiceClient
 import com.netonstream.privchat.application.module.privchat.client.PrivchatServiceClientImpl
 import infra.TableRegistryBuilder
+import kotlin.system.exitProcess
+import migration.MigrationCommandRunner
 import neton.core.Neton
 import neton.core.component.cors
 import neton.core.config.ConfigLoader
@@ -23,6 +25,25 @@ import init.PlatformModuleInitializer
 import init.PrivchatModuleInitializer
 
 fun main(args: Array<String>) {
+    // ====== Migrate 子命令路径 ======
+    // `./application.kexe migrate <status|up|verify>` — 只跑 migration engine,
+    // 不启动 HTTP / scheduler / WebSocket / controllers / seed。SPEC §五。
+    //
+    // 模块列表必须与下方 `modules(...)` 完全一致。两处都 explicit 列出。
+    if (args.firstOrNull() == "migrate") {
+        val code = MigrationCommandRunner.run(args, listOf(
+            SystemModuleInitializer,
+            InfraModuleInitializer,
+            PrivchatModuleInitializer,
+            MemberModuleInitializer,
+            PaymentModuleInitializer,
+            PlatformModuleInitializer,
+            GameModuleInitializer,
+            AssistantModuleInitializer,
+        ))
+        exitProcess(code)
+    }
+
     val tableRegistryBuilder = TableRegistryBuilder()
 
     // 预构造 PrivchatServiceClient 并通过 DSL bind 提前绑定到 ctx，确保
