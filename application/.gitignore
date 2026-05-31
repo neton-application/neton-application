@@ -1,4 +1,0 @@
-# Build-time copy of per-module SQL by `copyModuleMigrations` task.
-# Source of truth: each module's own sql/<dialect>/V*.sql in its own repo.
-# DO NOT commit — regenerate via `./gradlew :application:copyModuleMigrations`.
-migrations/
