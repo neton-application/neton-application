@@ -99,3 +99,41 @@ tasks.matching { it.name.startsWith("linkDebugExecutable") }.configureEach {
     }
     dependsOn(gradle.includedBuild("neton").task(":neton-core:archivePosixEnv$targetName"))
 }
+
+// ============================================================
+// copyModuleMigrations — build-time packaging only.
+//
+// Runtime migration sources 由各 ModuleInitializer.migrations() 声明,**不**走这里。
+// 这里只把仓库里各模块的 sql/<dialect>/V*.sql 拷贝到 application 运行目录的
+// `migrations/<moduleId>/<dialect>/`,让 application.kexe migrate 子命令在
+// 当前 cwd 下能读到对应文件(SPEC §0.3 模块自管 SQL,application 不维护
+// 运行期映射表)。
+//
+// 拍板 (2026-06-01 DB-MIG-7A):
+//   - infra 短期持有 system+infra 合并 SQL (privchat-application/sql/postgresql)
+//   - system 模块 migrations() = emptyList(),DB-MIG-7B 再拆
+// ============================================================
+val moduleMigrations: List<Pair<String, String>> = listOf(
+    "infra"    to "../sql/postgresql",
+    "member"   to "../../privchat-application-module-member/sql/postgresql",
+    "payment"  to "../../privchat-application-module-payment/sql/postgresql",
+    "platform" to "../../privchat-application-module-platform/sql/postgresql",
+    "game"     to "../../privchat-application-module-game/sql/postgresql",
+    "privchat" to "../../neton-application-module-privchat/sql/postgresql",
+)
+
+val copyModuleMigrations by tasks.registering(Copy::class) {
+    group = "neton-migration"
+    description = "Aggregate per-module sql/<dialect>/V*.sql into ./migrations/<moduleId>/<dialect>/ " +
+        "for application.kexe migrate to scan at runtime."
+    val outDir = file("migrations")
+    outputs.dir(outDir)
+    moduleMigrations.forEach { (moduleId, src) ->
+        from(src) {
+            include("V*.sql")
+            into("$moduleId/postgresql")
+        }
+    }
+    into(outDir)
+    doFirst { outDir.deleteRecursively() }
+}

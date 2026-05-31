@@ -2,6 +2,7 @@ package init
 
 import infra.TableRegistryBuilder
 import neton.core.component.NetonContext
+import neton.core.module.MigrationSource
 import neton.core.module.ModuleInitializer
 import neton.logging.LoggerFactory
 import neton.security.jwt.JwtAuthenticatorV1
@@ -22,6 +23,16 @@ import logic.provider.*
 object SystemModuleInitializer : ModuleInitializer {
 
     override val moduleId: String = "system"
+
+    /**
+     * 短期 system 表的 SQL 由 [InfraModuleInitializer] 持有(DB-MIG-7A 拍板)。
+     * 当前 `privchat-application/sql/postgresql/V001__create_tables.sql` 里
+     * `system_*` 与 `infra_*` 表混在一起,由 infra 模块整体迁移。
+     *
+     * TODO(DB-MIG-7B): split system_* tables out into module-system owned migrations.
+     * 拆完后这里改为返回自己的 [MigrationSource]。
+     */
+    override fun migrations(): List<MigrationSource> = emptyList()
 
     override fun initialize(ctx: NetonContext) {
         val loggerFactory = ctx.get(LoggerFactory::class)
