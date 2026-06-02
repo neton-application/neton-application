@@ -1,7 +1,6 @@
 package migration
 
 import kotlinx.coroutines.runBlocking
-import neton.core.config.getEnv
 import neton.core.module.ModuleInitializer
 import neton.database.adapter.sqlx.SqlxDatabase
 import neton.database.adapter.sqlx.SqlxDbContext
@@ -38,46 +37,8 @@ internal object MigrationStartupPrecheck {
 
     /**
      * @return null = OK(可以继续启动);非空 String = 应 fail-fast 的原因
-     *
-     * **Smoke-only bypass**: 当环境变量 `NETON_MIGRATION_PRECHECK_STRICT=false` 时,
-     * precheck 失败(包括抛异常 / 返回非空 reason)降级为 warn,允许进程继续启动。
-     * 默认行为(env 未设置或为其他值)仍保持严格 fail-fast。
-     *
-     * 此 bypass 仅用于本地 smoke,用于绕过遗留 DB 的 `neton_schema_history_*` 旧 schema
-     * 与新 framework 的 schema 失配(NETON-DB-MIGRATION-HISTORY-UPGRADE 待办)。
      */
     fun check(args: Array<String>, modules: List<ModuleInitializer>): String? {
-        val strict = getEnv("NETON_MIGRATION_PRECHECK_STRICT") != "false"
-        return try {
-            val reason = doCheck(args, modules)
-            if (reason != null && !strict) {
-                println(
-                    "WARN MigrationStartupPrecheck bypassed: current DB likely uses legacy " +
-                        "neton_schema_history_* schema. This is a SMOKE-ONLY bypass " +
-                        "(NETON_MIGRATION_PRECHECK_STRICT=false). " +
-                        "TODO NETON-DB-MIGRATION-HISTORY-UPGRADE — proper fix is to upgrade 5 " +
-                        "history tables to new (module_id, installed_at, execution_ms, success bool) " +
-                        "schema. reason=${reason.lineSequence().firstOrNull() ?: reason}"
-                )
-                null
-            } else {
-                reason
-            }
-        } catch (e: Throwable) {
-            if (strict) throw e
-            println(
-                "WARN MigrationStartupPrecheck bypassed: current DB likely uses legacy " +
-                    "neton_schema_history_* schema. This is a SMOKE-ONLY bypass " +
-                    "(NETON_MIGRATION_PRECHECK_STRICT=false). " +
-                    "TODO NETON-DB-MIGRATION-HISTORY-UPGRADE — proper fix is to upgrade 5 " +
-                    "history tables to new (module_id, installed_at, execution_ms, success bool) " +
-                    "schema. error=${e::class.simpleName}: ${e.message}"
-            )
-            null
-        }
-    }
-
-    private fun doCheck(args: Array<String>, modules: List<ModuleInitializer>): String? {
         val cfg = when (val r = MigrationConfigLoader.load(args)) {
             is MigrationConfigLoader.Result.Ok -> r
             is MigrationConfigLoader.Result.Failure ->
