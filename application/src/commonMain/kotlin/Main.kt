@@ -16,48 +16,24 @@ import neton.security.security
 import neton.storage.storage
 import security.WildcardPermissionEvaluator
 
-import init.AssistantModuleInitializer
-import init.GameModuleInitializer
-import init.SystemModuleInitializer
-import init.InfraModuleInitializer
-import init.MemberModuleInitializer
-import init.PaymentModuleInitializer
-import init.PlatformModuleInitializer
-import init.PrivchatModuleInitializer
+// MANIFEST-P2: 模块列表唯一来源是 application/build.gradle.kts 的
+// `ksp { arg("neton.modules", "...") }`。KSP 生成 GeneratedApplicationModules,
+// migrate / precheck / serve 三处共用 —— 不再手写 import + 三份列表。
+import neton.application.generated.GeneratedApplicationModules
 
 fun main(args: Array<String>) {
     // ====== Migrate 子命令路径 ======
     // `./application.kexe migrate <status|up|verify>` — 只跑 migration engine,
     // 不启动 HTTP / scheduler / WebSocket / controllers / seed。SPEC §五。
-    //
-    // 模块列表必须与下方 `modules(...)` 完全一致。两处都 explicit 列出。
     if (args.firstOrNull() == "migrate") {
-        val code = MigrationCommandRunner.run(args, listOf(
-            SystemModuleInitializer,
-            InfraModuleInitializer,
-            PrivchatModuleInitializer,
-            MemberModuleInitializer,
-            PaymentModuleInitializer,
-            PlatformModuleInitializer,
-            GameModuleInitializer,
-            AssistantModuleInitializer,
-        ))
+        val code = MigrationCommandRunner.run(args, GeneratedApplicationModules.modules)
         exitProcess(code)
     }
 
     // ====== Startup migration precheck (SPEC §0.6 红线) ======
     // 正常启动绝不自动 migrate。检查 pending/failed/mismatch,有就 fail-fast。
     // 与上方 migrate 子命令共用同一份模块列表 + ApplicationMigrationSources.collect。
-    MigrationStartupPrecheck.check(args, listOf(
-        SystemModuleInitializer,
-        InfraModuleInitializer,
-        PrivchatModuleInitializer,
-        MemberModuleInitializer,
-        PaymentModuleInitializer,
-        PlatformModuleInitializer,
-        GameModuleInitializer,
-        AssistantModuleInitializer,
-    ))?.let { reason ->
+    MigrationStartupPrecheck.check(args, GeneratedApplicationModules.modules)?.let { reason ->
         println("================== STARTUP ABORTED ==================")
         println(reason.trimEnd())
         println("=====================================================")
@@ -127,16 +103,7 @@ fun main(args: Array<String>) {
         // @RateLimit 注解标注的接口将自动生效
         routing { }
 
-        modules(
-            SystemModuleInitializer,
-            InfraModuleInitializer,
-            PrivchatModuleInitializer,
-            MemberModuleInitializer,
-            PaymentModuleInitializer,
-            PlatformModuleInitializer,
-            GameModuleInitializer,
-            AssistantModuleInitializer,
-        )
+        modules(*GeneratedApplicationModules.modules.toTypedArray())
     }
 }
 

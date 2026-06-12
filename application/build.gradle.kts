@@ -63,6 +63,15 @@ dependencies {
     add("kspMingwX64", "com.netonstream:neton-ksp")
 }
 
+// MANIFEST-P2: application 模块 registry 唯一来源。引入/移除模块 = settings.gradle
+// dependency + 这里加/删一个 id。KSP ApplicationRegistryProcessor 生成
+// neton.application.generated.GeneratedApplicationModules —— Main.kt 的 migrate
+// 子命令 / startup precheck / serve modules(...) 三处共用，不再手写模块列表。
+// 顺序 = 声明顺序（Neton.run 内部仍按 dependsOn 拓扑排序兜底）。
+ksp {
+    arg("neton.modules", "system,infra,privchat,member,payment,platform,game,assistant")
+}
+
 // Ensure Kotlin compilation sees KSP-generated commonMain sources.
 // Required because application Main references generated GeneratedNetonConfigRegistry —
 // K2 metadata compilation needs it at the commonMain level.
