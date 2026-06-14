@@ -9,6 +9,7 @@ import neton.logging.Logger
 import neton.redis.RedisClient
 import kotlin.time.Duration.Companion.minutes
 
+@neton.core.annotations.Logic(logger = "logic.config")
 class ConfigLogic(
     private val log: Logger,
     private val redis: RedisClient? = null
