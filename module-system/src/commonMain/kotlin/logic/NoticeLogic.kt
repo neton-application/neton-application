@@ -11,6 +11,7 @@ import neton.database.dsl.*
 
 import neton.logging.Logger
 
+@neton.core.annotations.Logic(logger = "logic.notice")
 class NoticeLogic(
     private val log: Logger
 ) {

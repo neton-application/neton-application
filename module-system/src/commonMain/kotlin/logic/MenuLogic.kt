@@ -9,6 +9,7 @@ import neton.logging.Logger
 import neton.database.dsl.*
 
 
+@neton.core.annotations.Logic(logger = "logic.menu")
 class MenuLogic(
     private val log: Logger
 ) {

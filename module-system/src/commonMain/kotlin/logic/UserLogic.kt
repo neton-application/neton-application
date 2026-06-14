@@ -19,6 +19,7 @@ import neton.database.dsl.*
 import neton.security.password.PasswordHasher
 
 
+@neton.core.annotations.Logic(logger = "logic.user")
 class UserLogic(
     private val log: Logger
 ) {

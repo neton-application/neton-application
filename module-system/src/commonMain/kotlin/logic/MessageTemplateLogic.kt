@@ -12,6 +12,7 @@ import neton.logging.Logger
 import neton.database.dsl.*
 
 
+@neton.core.annotations.Logic(logger = "logic.message-template")
 class MessageTemplateLogic(
     private val log: Logger
 ) {

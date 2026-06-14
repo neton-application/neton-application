@@ -12,6 +12,7 @@ import neton.logging.Logger
 import neton.database.dsl.*
 
 
+@neton.core.annotations.Logic(logger = "logic.role")
 class RoleLogic(
     private val log: Logger
 ) {

@@ -2,8 +2,6 @@ package init
 
 import infra.TableRegistryBuilder
 import neton.core.component.NetonContext
-import neton.core.module.MigrationSource
-import neton.core.module.ModuleInitializer
 import neton.logging.LoggerFactory
 import neton.security.jwt.JwtAuthenticatorV1
 import config.buildJwtAuthenticator
@@ -11,30 +9,19 @@ import config.loadSuperAdminCodes
 import security.CodeMatchSuperAdminEvaluator
 import security.SuperAdminEvaluator
 
-// models
 import model.*
-// tables
 import table.*
-// logic
 import logic.*
-// providers
 import logic.provider.*
 
-object SystemModuleInitializer : ModuleInitializer {
+// MANIFEST-P3: 手写 runtime bootstrap。9 个纯单-Logger logic 已标 @Logic →
+// 生成的 SystemLogicInitializer 装配 (manifest 顺序: logics → 本 bootstrap → routes)。
+// moduleId/路由 由 KSP manifest; system 不持有 migration (DB-MIG-7A: SQL 合并到 infra)。
+// 这里留: Table 注册 + jwt + superAdmin evaluator + providers + 7 个带依赖的复杂 logic
+// (MessageChannel/MessageSend/SocialUser/NotificationTemplate/Auth/Permission/Dict)。
+object SystemRuntimeBootstrap {
 
-    override val moduleId: String = "system"
-
-    /**
-     * 短期 system 表的 SQL 由 [InfraModuleInitializer] 持有(DB-MIG-7A 拍板)。
-     * 当前 `privchat-application/sql/postgresql/V001__create_tables.sql` 里
-     * `system_*` 与 `infra_*` 表混在一起,由 infra 模块整体迁移。
-     *
-     * TODO(DB-MIG-7B): split system_* tables out into module-system owned migrations.
-     * 拆完后这里改为返回自己的 [MigrationSource]。
-     */
-    override fun migrations(): List<MigrationSource> = emptyList()
-
-    override fun initialize(ctx: NetonContext) {
+    fun initialize(ctx: NetonContext) {
         val loggerFactory = ctx.get(LoggerFactory::class)
         val registry = ctx.get(TableRegistryBuilder::class)
 
@@ -45,8 +32,7 @@ object SystemModuleInitializer : ModuleInitializer {
         val jwt = ctx.getOrNull(JwtAuthenticatorV1::class) ?: buildJwtAuthenticator(ctx)
         ctx.bind(JwtAuthenticatorV1::class, jwt)
 
-        // SuperAdminEvaluator —— rbac-spec §7。
-        // 启动日志只打 count，不打具体 codes（避免泄露安全配置）。
+        // SuperAdminEvaluator —— rbac-spec §7。启动日志只打 count, 不打具体 codes。
         val superAdminCodes = loadSuperAdminCodes(ctx)
         val securityLog = loggerFactory.get("security")
         securityLog.info("security.super_admin_codes.loaded count=${superAdminCodes.size}")
@@ -62,34 +48,24 @@ object SystemModuleInitializer : ModuleInitializer {
         val telegramProvider = TelegramSocialProvider(loggerFactory.get("provider.telegram"))
         val socialProviders = mapOf<String, SocialProvider>("google" to googleProvider, "telegram" to telegramProvider)
 
-        // ===== 绑定 Logic =====
+        // ===== 带依赖的复杂 Logic (非 @Logic: provider map / nullable redis /
+        //       inter-logic 依赖 / inline SimpleCache) =====
+        // MessageTemplateLogic 已是 @Logic → ctx.get 取用。
+        val messageTemplateLogic = ctx.get(MessageTemplateLogic::class)
         val messageChannelLogic = MessageChannelLogic(loggerFactory.get("logic.message-channel"), messageProviders)
-        val messageTemplateLogic = MessageTemplateLogic(loggerFactory.get("logic.message-template"))
         val redis = ctx.getOrNull(neton.redis.RedisClient::class)
         val messageSendLogic = MessageSendLogic(loggerFactory.get("logic.message-send"), messageChannelLogic, messageTemplateLogic, redis)
         val socialUserLogic = SocialUserLogic(loggerFactory.get("logic.social-user"), socialProviders)
         val notificationTemplateLogic = NotificationTemplateLogic(loggerFactory.get("logic.notification-template"), messageSendLogic)
 
         ctx.bind(MessageChannelLogic::class, messageChannelLogic)
-        ctx.bind(MessageTemplateLogic::class, messageTemplateLogic)
         ctx.bind(MessageSendLogic::class, messageSendLogic)
         ctx.bind(SocialUserLogic::class, socialUserLogic)
         ctx.bind(NotificationTemplateLogic::class, notificationTemplateLogic)
 
         ctx.bind(AuthLogic::class, AuthLogic(loggerFactory.get("logic.auth"), jwt, messageSendLogic, socialUserLogic))
-        ctx.bind(UserLogic::class, UserLogic(loggerFactory.get("logic.user")))
-        ctx.bind(RoleLogic::class, RoleLogic(loggerFactory.get("logic.role")))
-        ctx.bind(MenuLogic::class, MenuLogic(loggerFactory.get("logic.menu")))
         ctx.bind(PermissionLogic::class, PermissionLogic(loggerFactory.get("logic.permission"), superAdminEvaluator))
         ctx.bind(DictLogic::class, DictLogic(loggerFactory.get("logic.dict"), infra.SimpleCache()))
-        ctx.bind(LogLogic::class, LogLogic(loggerFactory.get("logic.log")))
-        ctx.bind(DeptLogic::class, DeptLogic(loggerFactory.get("logic.dept")))
-        ctx.bind(PostLogic::class, PostLogic(loggerFactory.get("logic.post")))
-        ctx.bind(NoticeLogic::class, NoticeLogic(loggerFactory.get("logic.notice")))
-        ctx.bind(NotifyMessageLogic::class, NotifyMessageLogic(loggerFactory.get("logic.notify-message")))
-
-        // 注册 KSP 生成的路由
-        neton.module.system.generated.SystemRouteInitializer.initialize(ctx)
     }
 
     private fun registerTables(registry: TableRegistryBuilder) {
@@ -105,7 +81,6 @@ object SystemModuleInitializer : ModuleInitializer {
         registry.register(Notice::class, NoticeTable)
         registry.register(LoginLog::class, LoginLogTable)
         registry.register(OperateLog::class, OperateLogTable)
-        // Provider tables
         registry.register(MessageChannel::class, MessageChannelTable)
         registry.register(MessageTemplate::class, MessageTemplateTable)
         registry.register(MessageLog::class, MessageLogTable)

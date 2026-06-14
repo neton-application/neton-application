@@ -12,6 +12,7 @@ import neton.database.dsl.*
 
 import neton.logging.Logger
 
+@neton.core.annotations.Logic(logger = "logic.post")
 class PostLogic(
     private val log: Logger
 ) {
