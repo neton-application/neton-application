@@ -1,12 +1,9 @@
-import com.netonstream.privchat.application.module.privchat.client.PrivchatServiceClient
-import com.netonstream.privchat.application.module.privchat.client.PrivchatServiceClientImpl
 import infra.TableRegistryBuilder
 import kotlin.system.exitProcess
 import migration.MigrationCommandRunner
 import migration.MigrationStartupPrecheck
 import neton.core.Neton
 import neton.core.component.cors
-import neton.core.config.ConfigLoader
 import neton.core.generated.GeneratedNetonConfigRegistry
 import neton.database.database
 import neton.http.http
@@ -42,18 +39,11 @@ fun main(args: Array<String>) {
 
     val tableRegistryBuilder = TableRegistryBuilder()
 
-    // 预构造 PrivchatServiceClient 并通过 DSL bind 提前绑定到 ctx，确保
-    // SecurityConfig（在 SecurityComponent.start 阶段触发，先于 module init）能拿到。
-    // 重复绑定由 PrivchatModuleInitializer 兜底（用 bindIfAbsent 语义）。
-    val privchatServiceClient = buildPrivchatServiceClient(args)
-
     Neton.run(args) {
         configRegistry(GeneratedNetonConfigRegistry)
 
         // 预绑定 TableRegistryBuilder，供各模块 initialize() 中注册 Table
         bind(TableRegistryBuilder::class, tableRegistryBuilder)
-        // 预绑定 PrivchatServiceClient（spec MODULE_PRIVCHAT §5）
-        bind(PrivchatServiceClient::class, privchatServiceClient)
 
         // CORS via DSL —— neton 的 TomlParser 不支持 array 语法，application.conf
         // 里写 [cors] allowedOrigins = [...] 会被吞掉（详见 HttpComponent.kt:36），
@@ -105,30 +95,4 @@ fun main(args: Array<String>) {
 
         modules(*GeneratedApplicationModules.modules.toTypedArray())
     }
-}
-
-/**
- * 直接读 `config/privchat.conf` 构造 PrivchatServiceClient（与 PrivchatModuleInitializer
- * 内部一致），用于在 Neton DSL 阶段预绑定。
- */
-private fun buildPrivchatServiceClient(args: Array<String>): PrivchatServiceClient {
-    val config = ConfigLoader.loadModuleConfig(
-        "privchat",
-        configPath = "config",
-        environment = ConfigLoader.resolveEnvironment(args),
-        args = args,
-    ) ?: error("Missing privchat.conf — application 必须提供 [server] 配置")
-    val baseUrl = ConfigLoader.getString(config, "server.service_api_base_url")
-        ?.trim()?.takeIf { it.isNotEmpty() }
-        ?: error("privchat.conf: server.service_api_base_url 必填")
-    val serviceKey = ConfigLoader.getString(config, "server.service_master_key")
-        ?.trim()?.takeIf { it.isNotEmpty() }
-        ?: error("privchat.conf: server.service_master_key 必填（NETON_PRIVCHAT__SERVER__SERVICE_MASTER_KEY 可覆盖）")
-    val businessSystemId = ConfigLoader.getString(config, "server.business_system_id")
-        ?.trim()?.takeIf { it.isNotEmpty() }
-    return PrivchatServiceClientImpl(
-        baseUrl = baseUrl.trimEnd('/'),
-        serviceMasterKey = serviceKey,
-        businessSystemId = businessSystemId,
-    )
 }
