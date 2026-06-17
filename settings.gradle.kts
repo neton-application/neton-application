@@ -6,7 +6,7 @@ pluginManagement {
     }
 }
 
-rootProject.name = "privchat-application"
+rootProject.name = "neton-application"
 
 // 框架依赖（composite build）
 includeBuild("../neton")
