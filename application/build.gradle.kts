@@ -29,13 +29,12 @@ kotlin {
                 implementation(project(":module-system"))
                 implementation(project(":module-infra"))
 
-                // 独立扩展模块（按需注释/取消注释，通过 composite build 解析）
+                // 通用 base distribution 默认模块。R5-B: game/assistant(产品模块)
+                // 与 com.netonstream.privchat:main(可选 IM 模块)移出 base,由
+                // privchat-application 产品发行版 fork 加回。
                 implementation("com.netonstream.app:module-member")
                 implementation("com.netonstream.app:module-payment")
                 implementation("com.netonstream.app:module-platform")
-                implementation("com.netonstream.app:module-game")
-                implementation("com.netonstream.app:module-assistant")
-                implementation("com.netonstream.privchat:main")
 
                 // 框架依赖
                 implementation("com.netonstream:neton-core")
@@ -69,7 +68,7 @@ dependencies {
 // 子命令 / startup precheck / serve modules(...) 三处共用，不再手写模块列表。
 // 顺序 = 声明顺序（Neton.run 内部仍按 dependsOn 拓扑排序兜底）。
 ksp {
-    arg("neton.modules", "system,infra,privchat,member,payment,platform,game,assistant")
+    arg("neton.modules", "system,infra,member,payment,platform")
 }
 
 // Ensure Kotlin compilation sees KSP-generated commonMain sources.

@@ -11,16 +11,12 @@ rootProject.name = "neton-application"
 // 框架依赖（composite build）
 includeBuild("../neton")
 
-// 独立扩展模块（按需引入，注释即可去掉）
+// 通用 base distribution 默认模块（system/infra in-tree + member/payment/platform）。
+// R5-B: game/assistant 属 PrivChat 产品模块、module-privchat 属可选 IM 模块，
+// 均移出通用 base，由 privchat-application 产品发行版 fork 自行 include。
 includeBuild("../privchat-application-module-member")
 includeBuild("../privchat-application-module-payment")
 includeBuild("../privchat-application-module-platform")
-includeBuild("../privchat-application-module-game")
-includeBuild("../privchat-application-module-assistant")
-
-// PrivChat 官方开发的 Neton Application 独立模块（无 Neton 上游）
-// 详见 spec/07-application/MODULE_PRIVCHAT_SPEC.md
-includeBuild("../neton-application-module-privchat")
 
 // 核心模块
 include(":module-system")
