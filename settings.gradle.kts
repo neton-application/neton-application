@@ -14,9 +14,10 @@ includeBuild("../neton")
 // 通用 base distribution 默认模块（system/infra in-tree + member/payment/platform）。
 // R5-B: game/assistant 属 PrivChat 产品模块、module-privchat 属可选 IM 模块，
 // 均移出通用 base，由 privchat-application 产品发行版 fork 自行 include。
-includeBuild("../privchat-application-module-member")
-includeBuild("../privchat-application-module-payment")
-includeBuild("../privchat-application-module-platform")
+// canonicalize：统一用 ../../Neton/ 前缀指向 canonical 通用模块，不再指向 privchat fork 目录
+includeBuild("../../Neton/neton-application-module-member")
+includeBuild("../../Neton/neton-application-module-payment")
+includeBuild("../../Neton/neton-application-module-platform")
 
 // 核心模块
 include(":module-system")
