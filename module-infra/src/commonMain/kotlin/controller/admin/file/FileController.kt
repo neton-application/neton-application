@@ -18,7 +18,7 @@ import neton.logging.Logger
 @Controller("/infra/file")
 class FileController(
     private val log: Logger,
-    private val fileLogic: FileLogic = FileLogic(log)
+    private val fileLogic: FileLogic,
 ) {
 
     @Post("/upload")

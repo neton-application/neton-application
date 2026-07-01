@@ -16,11 +16,13 @@ import table.UserRoleTable
 import table.UserTable
 import neton.core.http.NotFoundException
 import neton.logging.Logger
+import neton.database.api.DbContext
 import neton.database.dsl.*
 
 class PermissionLogic(
     private val log: Logger,
-    private val superAdminEvaluator: SuperAdminEvaluator
+    private val superAdminEvaluator: SuperAdminEvaluator,
+    private val db: DbContext,
 ) {
 
     suspend fun getPermissionInfo(userId: Long): PermissionInfoVO {
@@ -133,7 +135,7 @@ class PermissionLogic(
             ?: throw NotFoundException("Role not found")
 
         // Remove existing mappings + insert new mappings in a single transaction
-        RoleMenuTable.transaction {
+        db.transaction {
             val existing = RoleMenuTable.query {
                 where { RoleMenu::roleId eq roleId }
             }.list()
@@ -157,7 +159,7 @@ class PermissionLogic(
 
     suspend fun assignUserRole(userId: Long, roleIds: List<Long>) {
         // Remove existing mappings + insert new mappings in a single transaction
-        UserRoleTable.transaction {
+        db.transaction {
             val existing = UserRoleTable.query {
                 where { UserRole::userId eq userId }
             }.list()

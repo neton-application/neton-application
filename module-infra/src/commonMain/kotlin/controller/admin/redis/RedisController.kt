@@ -3,25 +3,18 @@ package controller.admin.redis
 import controller.admin.redis.dto.CommandStat
 import controller.admin.redis.dto.RedisMonitorVO
 import neton.core.annotations.*
-import neton.core.component.NetonContext
 import neton.logging.Logger
 import neton.redis.RedisClient
 
 @Controller("/infra/redis")
 class RedisController(
-    private val log: Logger
+    private val log: Logger,
+    private val redis: RedisClient,
 ) {
 
     @Get("/get-monitor-info")
     @Permission("infra:redis:query")
     suspend fun getMonitorInfo(): RedisMonitorVO {
-        val redis = NetonContext.current().getOrNull(RedisClient::class)
-            ?: return RedisMonitorVO(
-                info = defaultRedisInfo(),
-                dbSize = 0,
-                commandStats = emptyList()
-            )
-
         return try {
             // 1. 获取 Redis INFO
             val infoRaw = redis.info() ?: ""

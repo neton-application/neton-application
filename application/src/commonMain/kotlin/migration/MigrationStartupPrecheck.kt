@@ -3,7 +3,6 @@ package migration
 import kotlinx.coroutines.runBlocking
 import neton.core.module.ModuleInitializer
 import neton.database.adapter.sqlx.SqlxDatabase
-import neton.database.adapter.sqlx.SqlxDbContext
 import neton.database.migration.MigrationCommand
 import neton.database.migration.MigrationEngine
 import neton.database.migration.MigrationResult
@@ -49,7 +48,7 @@ internal object MigrationStartupPrecheck {
         // 一次(sqlx4k 允许覆盖). 这是 dev 便利路径; 生产建议:
         //   先 `application.kexe migrate up` 跑完, 再 `application.kexe` 起服务.
         // 这种部署节奏下 precheck 只是兜底, 实际命中也只是 fail-fast 拒绝启动.
-        try {
+        val dbContext = try {
             SqlxDatabase.initialize(cfg.database)
         } catch (e: Throwable) {
             return "database connect failed: ${e.message}"
@@ -62,7 +61,7 @@ internal object MigrationStartupPrecheck {
             return null
         }
 
-        val engine = MigrationEngine(SqlxDbContext, cfg.migration)
+        val engine = MigrationEngine(dbContext, cfg.migration)
         val result = runBlocking { engine.run(MigrationCommand.STATUS, sources) }
 
         return when (result) {

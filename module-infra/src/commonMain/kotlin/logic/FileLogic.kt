@@ -6,12 +6,14 @@ import model.FileConfig
 import table.FileInfoTable
 import table.FileConfigTable
 import neton.database.dsl.*
+import neton.database.api.DbContext
 
 import neton.logging.Logger
 
 @neton.core.annotations.Logic(logger = "logic.file")
 class FileLogic(
-    private val log: Logger
+    private val log: Logger,
+    private val db: DbContext,
 ) {
 
     // --- FileInfo operations ---
@@ -123,7 +125,7 @@ class FileLogic(
 
     suspend fun updateMaster(id: Long) {
         // Reset all configs to non-master + set the specified config as master in a single transaction
-        FileConfigTable.transaction {
+        db.transaction {
             FileConfigTable.query {}.list().forEach { config ->
                 if (config.master != 0) {
                     FileConfigTable.update(config.copy(master = 0))

@@ -10,7 +10,7 @@ import neton.database.migration.fromDriver
 /**
  * 从 `config/database.conf` 解析 application migration 配置:
  *   - `[default].driver` / `[default].uri` → [DatabaseConfig]
- *   - `[migration].history_table`(可选,缺省 [MigrationConfig.DEFAULT_HISTORY_TABLE])
+ *   - `[migration].history_table`（正式应用必填）
  *
  * 解析失败返回 [Result.Failure] 而不是抛异常,caller 决定 exit code(SPEC §5.4)。
  */
@@ -54,8 +54,9 @@ internal object MigrationConfigLoader {
 
         @Suppress("UNCHECKED_CAST")
         val migSection = dbConf["migration"] as? Map<String, Any?>
-        val historyTable = (migSection?.get("history_table") as? String)
-            ?: MigrationConfig.DEFAULT_HISTORY_TABLE
+            ?: return Result.Failure("config/database.conf: missing [migration] section")
+        val historyTable = (migSection["history_table"] as? String)?.takeIf { it.isNotBlank() }
+            ?: return Result.Failure("config/database.conf: [migration].history_table required")
 
         return Result.Ok(
             database = DatabaseConfig(driver = driver, uri = uri),

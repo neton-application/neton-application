@@ -3,7 +3,6 @@ package migration
 import kotlinx.coroutines.runBlocking
 import neton.core.module.ModuleInitializer
 import neton.database.adapter.sqlx.SqlxDatabase
-import neton.database.adapter.sqlx.SqlxDbContext
 import neton.database.migration.MigrationCommand
 import neton.database.migration.MigrationEngine
 import neton.database.migration.MigrationResult
@@ -73,7 +72,7 @@ internal object MigrationCommandRunner {
         }
 
         // ----- 2. 初始化 SqlxDatabase (复用 application 链接的 driver,不启动其他组件) -----
-        try {
+        val dbContext = try {
             SqlxDatabase.initialize(cfg.database)
         } catch (e: Throwable) {
             println("database connect failed: ${e.message}")
@@ -84,7 +83,7 @@ internal object MigrationCommandRunner {
         val sources = ApplicationMigrationSources.collect(modules, cfg.migration.dialect)
 
         // ----- 4. 跑 engine -----
-        val engine = MigrationEngine(SqlxDbContext, cfg.migration)
+        val engine = MigrationEngine(dbContext, cfg.migration)
         val result = engine.run(command, sources)
 
         // ----- 5. 格式化 + exit code -----

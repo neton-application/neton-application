@@ -9,12 +9,14 @@ import table.RoleTable
 import neton.core.http.BadRequestException
 import neton.core.http.NotFoundException
 import neton.logging.Logger
+import neton.database.api.DbContext
 import neton.database.dsl.*
 
 
 @neton.core.annotations.Logic(logger = "logic.role")
 class RoleLogic(
-    private val log: Logger
+    private val log: Logger,
+    private val db: DbContext,
 ) {
 
     suspend fun page(
@@ -86,7 +88,7 @@ class RoleLogic(
             ?: throw NotFoundException("Role not found")
 
         // Remove associated role-menu mappings + delete role in a single transaction
-        RoleTable.transaction {
+        db.transaction {
             RoleMenuTable.query {
                 where { RoleMenu::roleId eq id }
             }.list().forEach { RoleMenuTable.destroy(it.id) }
@@ -100,7 +102,7 @@ class RoleLogic(
             ?: throw NotFoundException("Role not found")
 
         // Remove existing mappings + insert new mappings in a single transaction
-        RoleTable.transaction {
+        db.transaction {
             val existingMappings = RoleMenuTable.query {
                 where { RoleMenu::roleId eq roleId }
             }.list()

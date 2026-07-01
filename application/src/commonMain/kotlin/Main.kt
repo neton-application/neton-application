@@ -1,4 +1,3 @@
-import infra.TableRegistryBuilder
 import kotlin.system.exitProcess
 import migration.MigrationCommandRunner
 import migration.MigrationStartupPrecheck
@@ -37,13 +36,8 @@ fun main(args: Array<String>) {
         exitProcess(1)
     }
 
-    val tableRegistryBuilder = TableRegistryBuilder()
-
     Neton.run(args) {
         configRegistry(GeneratedNetonConfigRegistry)
-
-        // 预绑定 TableRegistryBuilder，供各模块 initialize() 中注册 Table
-        bind(TableRegistryBuilder::class, tableRegistryBuilder)
 
         // CORS via DSL —— neton 的 TomlParser 不支持 array 语法，application.conf
         // 里写 [cors] allowedOrigins = [...] 会被吞掉（详见 HttpComponent.kt:36），
@@ -65,13 +59,11 @@ fun main(args: Array<String>) {
             }
         }
 
-        // database 启动只做连接探活与 tableRegistry 注入。
+        // database 启动只做连接初始化与探活。
         // 严禁在此或任何 ModuleInitializer 中调用 ensureTable()/ALTER 等 schema 变更逻辑。
         // schema 演进的唯一权威路径是手动 SQL 脚本（sql/{dialect}/V*.sql）。
         // 详见架构边界：neton-docs/docs/spec/migration.md
-        database {
-            tableRegistry = tableRegistryBuilder.build()
-        }
+        database { }
 
         security {
             // 注入应用脚手架的通配权限评估器（rbac-spec §4.2）。

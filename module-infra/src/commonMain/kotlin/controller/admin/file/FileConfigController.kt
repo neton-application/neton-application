@@ -20,7 +20,7 @@ import neton.logging.Logger
 @Controller("/infra/file-config")
 class FileConfigController(
     private val log: Logger,
-    private val fileLogic: FileLogic = FileLogic(log)
+    private val fileLogic: FileLogic,
 ) {
 
     @Post("/create")

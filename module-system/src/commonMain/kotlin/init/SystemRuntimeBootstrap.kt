@@ -1,6 +1,5 @@
 package init
 
-import infra.TableRegistryBuilder
 import neton.core.component.NetonContext
 import neton.logging.LoggerFactory
 import neton.security.jwt.JwtAuthenticatorV1
@@ -9,25 +8,18 @@ import config.loadSuperAdminCodes
 import security.CodeMatchSuperAdminEvaluator
 import security.SuperAdminEvaluator
 
-import model.*
-import table.*
 import logic.*
 import logic.provider.*
 
 // MANIFEST-P3: 手写 runtime bootstrap。9 个纯单-Logger logic 已标 @Logic →
 // 生成的 SystemLogicInitializer 装配 (manifest 顺序: logics → 本 bootstrap → routes)。
 // moduleId/路由 由 KSP manifest; system 不持有 migration (DB-MIG-7A: SQL 合并到 infra)。
-// 这里留: Table 注册 + jwt + superAdmin evaluator + providers + 7 个带依赖的复杂 logic
+// 这里留: jwt + superAdmin evaluator + providers + 7 个带依赖的复杂 logic
 // (MessageChannel/MessageSend/SocialUser/NotificationTemplate/Auth/Permission/Dict)。
 object SystemRuntimeBootstrap {
 
     fun initialize(ctx: NetonContext) {
         val loggerFactory = ctx.get(LoggerFactory::class)
-        val registry = ctx.get(TableRegistryBuilder::class)
-
-        // ===== 注册 Table =====
-        registerTables(registry)
-
         // ===== 创建共享服务 =====
         val jwt = ctx.getOrNull(JwtAuthenticatorV1::class) ?: buildJwtAuthenticator(ctx)
         ctx.bind(JwtAuthenticatorV1::class, jwt)
@@ -64,28 +56,15 @@ object SystemRuntimeBootstrap {
         ctx.bind(NotificationTemplateLogic::class, notificationTemplateLogic)
 
         ctx.bind(AuthLogic::class, AuthLogic(loggerFactory.get("logic.auth"), jwt, messageSendLogic, socialUserLogic))
-        ctx.bind(PermissionLogic::class, PermissionLogic(loggerFactory.get("logic.permission"), superAdminEvaluator))
+        ctx.bind(
+            PermissionLogic::class,
+            PermissionLogic(
+                loggerFactory.get("logic.permission"),
+                superAdminEvaluator,
+                ctx.get(neton.database.api.DbContext::class),
+            ),
+        )
         ctx.bind(DictLogic::class, DictLogic(loggerFactory.get("logic.dict"), infra.SimpleCache()))
     }
 
-    private fun registerTables(registry: TableRegistryBuilder) {
-        registry.register(User::class, UserTable)
-        registry.register(Role::class, RoleTable)
-        registry.register(Menu::class, MenuTable)
-        registry.register(UserRole::class, UserRoleTable)
-        registry.register(RoleMenu::class, RoleMenuTable)
-        registry.register(Dept::class, DeptTable)
-        registry.register(Post::class, PostTable)
-        registry.register(DictType::class, DictTypeTable)
-        registry.register(DictData::class, DictDataTable)
-        registry.register(Notice::class, NoticeTable)
-        registry.register(LoginLog::class, LoginLogTable)
-        registry.register(OperateLog::class, OperateLogTable)
-        registry.register(MessageChannel::class, MessageChannelTable)
-        registry.register(MessageTemplate::class, MessageTemplateTable)
-        registry.register(MessageLog::class, MessageLogTable)
-        registry.register(SocialUser::class, SocialUserTable)
-        registry.register(NotificationTemplate::class, NotificationTemplateTable)
-        registry.register(NotifyMessage::class, NotifyMessageTable)
-    }
 }
