@@ -25,6 +25,33 @@ class PermissionLogic(
     private val db: DbContext,
 ) {
 
+    /**
+     * 仅解析用户权限集（登录/刷新时写进 JWT 用），不建菜单树。
+     * super_admin → 通配 `*:*:*`；普通角色 → 其 role_menu 对应的 `menu.permission`。
+     * 这样 @Permission 请求时能从 token 里的 identity.permissions 精确判定（P0 granular RBAC）。
+     */
+    suspend fun resolvePermissions(userId: Long): Set<String> {
+        val roleIds = UserRoleTable.query {
+            where { UserRole::userId eq userId }
+        }.list().map { it.roleId }
+        if (roleIds.isEmpty()) return emptySet()
+
+        val roleCodes = RoleTable.query {
+            where { Role::id `in` roleIds }
+        }.list().filter { it.status == 1 }.map { it.code }.toSet()
+
+        if (superAdminEvaluator.isSuperAdmin(roleCodes)) return setOf("*:*:*")
+
+        val menuIds = RoleMenuTable.query {
+            where { RoleMenu::roleId `in` roleIds }
+        }.list().map { it.menuId }
+        if (menuIds.isEmpty()) return emptySet()
+
+        return MenuTable.query {
+            where { and(Menu::id `in` menuIds, Menu::status eq 1) }
+        }.list().mapNotNull { it.permission?.takeIf { p -> p.isNotBlank() } }.toSet()
+    }
+
     suspend fun getPermissionInfo(userId: Long): PermissionInfoVO {
         // Get user info
         val user = UserTable.get(userId) ?: throw NotFoundException("User not found")

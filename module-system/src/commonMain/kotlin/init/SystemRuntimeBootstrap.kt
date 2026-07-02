@@ -55,15 +55,14 @@ object SystemRuntimeBootstrap {
         ctx.bind(SocialUserLogic::class, socialUserLogic)
         ctx.bind(NotificationTemplateLogic::class, notificationTemplateLogic)
 
-        ctx.bind(AuthLogic::class, AuthLogic(loggerFactory.get("logic.auth"), jwt, messageSendLogic, socialUserLogic))
-        ctx.bind(
-            PermissionLogic::class,
-            PermissionLogic(
-                loggerFactory.get("logic.permission"),
-                superAdminEvaluator,
-                ctx.get(neton.database.api.DbContext::class),
-            ),
+        val permissionLogic = PermissionLogic(
+            loggerFactory.get("logic.permission"),
+            superAdminEvaluator,
+            ctx.get(neton.database.api.DbContext::class),
         )
+        ctx.bind(PermissionLogic::class, permissionLogic)
+        // AuthLogic 登录时用 permissionLogic 解析权限写进 JWT（P0 granular RBAC）。
+        ctx.bind(AuthLogic::class, AuthLogic(loggerFactory.get("logic.auth"), jwt, permissionLogic, messageSendLogic, socialUserLogic))
         ctx.bind(DictLogic::class, DictLogic(loggerFactory.get("logic.dict"), infra.SimpleCache()))
     }
 

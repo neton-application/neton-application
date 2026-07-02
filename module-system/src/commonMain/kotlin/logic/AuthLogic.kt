@@ -22,6 +22,8 @@ import neton.security.password.PasswordHasher
 class AuthLogic(
     private val log: Logger,
     private val jwt: JwtAuthenticatorV1,
+    // 生产必传（module-system 已注入）；为空则退化 emptySet（仅框架 example 的极简构造）。
+    private val permissionLogic: PermissionLogic? = null,
     private val messageSendLogic: MessageSendLogic? = null,
     private val socialUserLogic: SocialUserLogic? = null
 ) {
@@ -62,7 +64,8 @@ class AuthLogic(
         val accessToken = jwt.createToken(
             userId = UserId(user.id.toULong()),
             roles = roles,
-            permissions = emptySet(),
+            // P0 granular RBAC：把解析出的权限写进 access token（super→*:*:*，普通→role_menu 子集）。
+            permissions = permissionLogic?.resolvePermissions(user.id) ?: emptySet(),
             expiresInSeconds = ACCESS_TOKEN_EXPIRES,
             extraClaims = mapOf("type" to "access", "username" to user.username)
         )
@@ -122,7 +125,8 @@ class AuthLogic(
         val newAccessToken = jwt.createToken(
             userId = UserId(user.id.toULong()),
             roles = roles,
-            permissions = emptySet(),
+            // P0 granular RBAC：把解析出的权限写进 access token（super→*:*:*，普通→role_menu 子集）。
+            permissions = permissionLogic?.resolvePermissions(user.id) ?: emptySet(),
             expiresInSeconds = ACCESS_TOKEN_EXPIRES,
             extraClaims = mapOf("type" to "access", "username" to user.username)
         )
@@ -175,7 +179,8 @@ class AuthLogic(
         val accessToken = jwt.createToken(
             userId = UserId(user.id.toULong()),
             roles = roles,
-            permissions = emptySet(),
+            // P0 granular RBAC：把解析出的权限写进 access token（super→*:*:*，普通→role_menu 子集）。
+            permissions = permissionLogic?.resolvePermissions(user.id) ?: emptySet(),
             expiresInSeconds = ACCESS_TOKEN_EXPIRES,
             extraClaims = mapOf("type" to "access", "username" to user.username)
         )
@@ -266,7 +271,8 @@ class AuthLogic(
         val accessToken = jwt.createToken(
             userId = UserId(user.id.toULong()),
             roles = roles,
-            permissions = emptySet(),
+            // P0 granular RBAC：把解析出的权限写进 access token（super→*:*:*，普通→role_menu 子集）。
+            permissions = permissionLogic?.resolvePermissions(user.id) ?: emptySet(),
             expiresInSeconds = ACCESS_TOKEN_EXPIRES,
             extraClaims = mapOf("type" to "access", "username" to user.username)
         )
