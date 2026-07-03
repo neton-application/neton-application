@@ -84,13 +84,13 @@ Allowed exceptions:
   - package path
   - route prefix
 
-Examples:
+Prefer (resource-only class name; side comes from package/route):
 
 - `controller.admin.user.UserController`
 - `controller.app.auth.AuthController`
 - `controller.open.order.PlatformOrderController`
 
-Avoid:
+Avoid (side baked into the class name):
 
 - `AppUserController`
 - `AdminAuthController`

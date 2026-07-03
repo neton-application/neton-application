@@ -2,27 +2,33 @@
 
 Scope-locked 1.0 surface hardening. **No** HTTP Dispatcher / KSP rework / Kotlin 2.4 / Gradle P3 / repository-service rename.
 
-**Batch 1 status (this pass): STD-0, STD-2, STD-1 DONE. STD-3, STD-4 deferred to a later batch by directive.**
+**Status: STD-0, STD-1, STD-2, STD-3, STD-4 all DONE. APP-COMPOSITE moved out of this RC (see below).**
+
+Scope note: STANDARDIZATION-RC validates **module-level compile + tests + docs/API cleanup**. Aggregate `:application` compile is a real release gate but is **gated by separate composite-topology work** (see MODULE-SOURCE-CANONICALIZE-P0) and is not a pass condition for this RC.
 
 Repos touched:
 - `Neton/neton` (framework: database, docs)
-- `Neton/neton-application` (upstream: providers, naming)
-- `privchat/privchat-application` (**fork** of neton-application — must sync STD-0 + STD-3)
+- `Neton/neton-application` (upstream: providers, naming, docs)
+- `privchat/privchat-application` (**fork** of neton-application — synced STD-0 + STD-3)
 
 Fork rule: fix upstream `neton-application` first, then apply the same change to `privchat-application` as a **separate commit in that repo**. Never mix the two repos in one commit.
 
-Executed order (batch 1, by real-world risk): STD-0 → STD-2 → STD-1. (STD-1 done after STD-2 since removing the public TODO is zero-risk while fail-fast is a runtime behavior change.)
-
-### Batch 1 commit trail
+### Commit trail
 - STD-0 upstream `neton-application`: `fix(system): placeholder providers must not fake success (STD-0)`
 - STD-0 fork `privchat-application`: `fix(system): placeholder providers must not fake success (STD-0 fork sync)`
 - STD-2 `neton`: `b8b858a fix(database): remove unimplemented typed projection API (STD-2)`
 - STD-1 `neton`: `f6da05c fix(database): fail fast on invalid database config (STD-1)`
+- STD-3 upstream `neton-application`: `refactor(infra): remove redundant App prefix from file classes (STD-3)`
+- STD-3 fork `privchat-application`: `refactor(infra): ... (STD-3 fork sync)`
+- STD-4A `neton`: `00d0665 refactor(database): remove deprecated TableDefRegistry.find() (STD-4A)`
+- STD-4B `neton`: `0086377 docs: mark obsolete http-client design docs + turn neton-http TODO into Roadmap (STD-4B)`
+- STD-4C `neton-application`: module-template-spec Prefer/Avoid labels + this spec update
 
-### Deferred / backlog
-- **STD-3 (AppFile* rename) — deferred** to a later batch by directive.
-- **STD-4 (docs/API cleanup) — deferred** to a later batch by directive.
-- **APP-COMPOSITE-WIRING-P0** (new backlog item, NOT part of this batch): `:application` aggregate compile fails with `Could not find com.netonstream.app:module-{member,payment,platform}:` (empty version) — the `includeBuild` composite-build coordinate substitution isn't resolving (`application/build.gradle.kts:35-37` + `settings.gradle.kts:18-20`). Pre-existing, unrelated to this batch. Module-level compile + tests pass. Investigate separately.
+### APP-COMPOSITE-AUDIT conclusion (audit done, code untouched)
+- `:application` aggregate compile (`:application:compileKotlinMacosArm64`) **IS** the official build entrypoint — used by `.github/workflows/backend-ci.yml:73` in both `neton-application` and `privchat-application`, documented in README, and its binary output is consumed by `scripts/release-gate-smoke.sh`. It is **not** a historical/transitional entry.
+- The failure is a **known, intended-but-incomplete module canonicalization**, not a coordinate typo: `module-system`/`module-infra` are in-tree subprojects of `neton-application`, but `module-member`/`payment`/`platform` (independent included builds) each depend on `com.netonstream.app:module-system`(+`module-infra`) — coordinates a composite included build cannot reach up to the root build to resolve. `module-template-spec.md` §6.3 already prescribes `includeBuild("../neton-application")` for external modules that need `module-system`, but the three modules don't do it.
+- Extra risk: the `includeBuild("../../Neton/...")` canonical-prefix paths are layout-sensitive; whether current CI is green couldn't be verified from here (no `gh`). This should be confirmed by someone with CI access.
+- **Verdict**: real release-gate issue, but architectural (module source canonicalization) — **moved out of STANDARDIZATION-RC** into its own backlog **MODULE-SOURCE-CANONICALIZE-P0** (merge with the pre-existing multi-repo `includeBuild` / canonical-workspace backlog). Do NOT fix inside this RC. Fix direction (extract system/infra to standalone builds vs. add `includeBuild("../neton-application")` to member/payment/platform) is **undecided** and needs its own review.
 
 ---
 
@@ -80,7 +86,7 @@ Verify: `:neton-database:allTests`, KSP compile, aggregate compile.
 
 ---
 
-## STD-3 — AppFile* naming + fork sync (P1) — ⏸ DEFERRED (later batch)
+## STD-3 — AppFile* naming + fork sync (P1) — ✅ DONE (both repos; renamed to FileController / FileUploadLogic; routes unchanged)
 
 Problem: `module-infra/.../logic/AppFileLogic.kt` + `controller/app/infra/file/AppFileController.kt`. Package already `controller.app.infra.file` → `App` prefix redundant (ENGINEERING_RULES:116 / module-template-spec:95 use `AppUserController` as the anti-example). Present in both repos.
 
@@ -92,7 +98,7 @@ Verify: generated routes unchanged, aggregate compile, file API smoke.
 
 ---
 
-## STD-4 — Docs / API cleanup (P2) — ⏸ DEFERRED (later batch)
+## STD-4 — Docs / API cleanup (P2) — ✅ DONE (STD-4A find() removed; STD-4B http-client docs OBSOLETE + neton-http Roadmap; STD-4C module-template-spec Prefer/Avoid)
 
 - [ ] `neton/docs/superpowers/` old neton-http-client design docs → archive or mark `OBSOLETE` header (superseded by neton-http integrated NetonHttpClient). Also assess whether the physical `neton/neton-http-client/` dir is now vestigial (still exists alongside `neton-http`) → list for removal/archive, do not delete blindly.
 - [ ] `neton/neton-http/README.md:200` `## TODO` → `## Roadmap / Deferred after 1.0` with explicit supported/deferred + rationale.
