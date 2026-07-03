@@ -119,6 +119,21 @@
   - 不使用 `OpenOrderController`
 - 端侧语义由目录层级和 `@Controller("/xxx")` 路径表达，不由类名前缀表达。
 
+### 3.5.1 跨仓改名（重命名 public symbol 时必读）
+
+重命名任何被其它仓消费的 public symbol（class / object / top-level fun）时，**必须 grep 所有 canonical included build 独立仓，而不仅是当前 application 仓和它的 fork**。
+
+一次 `AppFileLogic → FileUploadLogic` 的改名只扫了 `neton-application/` 子树，漏掉了通过 `includeBuild` 引入的 canonical `neton-application-module-member`，导致 member 编译断裂（`Unresolved reference 'AppFileLogic'`）——member 的 `MemberProfileLogic` 消费了 module-infra 的这个类。
+
+改 public symbol 前，至少 grep 这些仓：
+- `neton-application`（当前仓）
+- `privchat-application`（fork）
+- `neton-application-module-member` / `-payment` / `-platform`（canonical 通用模块）
+- `neton-application-module-privchat`（可选 IM 模块）
+- `privchat-application-module-game` / `-assistant`（产品模块）
+
+命中的仓各自独立提交跟进（fork 同步规则不变）。
+
 ### 3.6 Controller 方法命名规范
 
 标准 CRUD 方法优先使用以下命名：

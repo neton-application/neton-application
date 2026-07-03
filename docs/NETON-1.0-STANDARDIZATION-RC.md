@@ -29,6 +29,16 @@ Fork rule: fix upstream `neton-application` first, then apply the same change to
 - **Correction after local verification:** an earlier draft here said the aggregate compile was a broken release gate — that was over-stated. **`privchat-application` (the product / commercial validation project) aggregate compile is GREEN** (verified locally). Only **`neton-application` base standalone aggregate compile fails.** The product works because its product modules (`game`/`assistant`) `includeBuild("../privchat-application")`, pulling the root (which owns `module-system`/`module-infra`) back into the composite as an included build so `member`/`payment`/`platform` can resolve those coordinates; the base has no such pull-in.
 - **Verdict**: a topology-consistency gap (base standalone build + fragile cyclic `includeBuild`), **not a broken product release gate**. Moved out of STANDARDIZATION-RC into **MODULE-SOURCE-CANONICALIZE-P0** (see `docs/backlog/`), where the corrected findings and options live. Do NOT fix inside this RC.
 
+### Final state (frozen)
+1. **NETON-1.0-STANDARDIZATION-RC: CLOSED.** STD-0..STD-4 done; module-level compile + tests + docs.
+2. **STD-3 rename fallout fixed.** The `AppFileLogic → FileUploadLogic` rename broke a cross-repo consumer (`neton-application-module-member`, which STD-3's grep missed). Fixed: `MemberProfileLogic.kt` committed as `9daf44b` in that repo; `MemberRuntimeBootstrap.kt:20` one-line change left in the member author's working tree (their WIP) to commit with their branch.
+3. **`privchat-application` aggregate compile: PASS** (verified locally, product path green).
+4. **APP-COMPOSITE audit corrected:** product release gate is green; only the base `neton-application` standalone aggregate compile has a topology gap (relies on a cyclic `includeBuild` that only the product forks provide).
+5. **MODULE-SOURCE-CANONICALIZE-P0: OPEN**, independent backlog, not part of this RC. Not a product-release blocker; fix later (base standalone build + remove the fragile cyclic `includeBuild` + canonical-workspace consistency).
+6. **Cross-repo rename lesson captured** in `ENGINEERING_RULES.md` §3.5.1: renaming a public symbol must grep **all** canonical included builds, not only the current app fork tree.
+
+Do not continue expanding this line: no build-topology changes, no touching others' WIP. Next steps are the member author's (commit the `MemberRuntimeBootstrap.kt` one-liner, run RP-7-A outbox smoke, confirm release-gate-smoke), then decide whether to open MODULE-SOURCE-CANONICALIZE-P0.
+
 ---
 
 ## STD-0 — Provider false-success (P0) — ✅ DONE (both repos)
