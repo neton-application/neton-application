@@ -2,23 +2,39 @@
 
 ## Status
 
-**OPEN.** Extracted from `NETON-1.0-STANDARDIZATION-RC` (see `docs/NETON-1.0-STANDARDIZATION-RC.md`).
+**OPEN (severity revised down after local verification).** Extracted from `NETON-1.0-STANDARDIZATION-RC` (see `docs/NETON-1.0-STANDARDIZATION-RC.md`).
 **Not part of STANDARDIZATION-RC completion** — that RC validates module-level compile + tests + docs/API cleanup only.
 
-This is a multi-repo build-topology / included-build / canonical-workspace problem, not a code bug. It needs its own project and an explicit architectural decision before any code/build changes.
+This is a multi-repo build-topology / included-build / canonical-workspace concern, not a code bug. It needs its own project and an explicit architectural decision before any build changes.
 
-> **Do NOT fix this by `publishToMavenLocal`.** Publishing modules to the local Maven repo to make CI green only hides the topology break — the included builds still can't resolve their dependencies within a clean composite. Any fix must work from a fresh checkout with no local publish step.
+> **Do NOT fix this by `publishToMavenLocal`.** Publishing modules to the local Maven repo to make a build green only hides the topology gap — any fix must work from a fresh checkout with no local publish step.
 
 ---
 
-## Problem
+## Verified findings (corrects an earlier over-statement)
 
-`:application:compileKotlinMacosArm64` is an **official CI / release-gate build entry**, but it currently fails because the canonical included business modules (`module-member` / `module-payment` / `module-platform`) cannot resolve `com.netonstream.app:module-system` / `com.netonstream.app:module-infra`.
+An earlier draft claimed the aggregate `:application` compile was a broken release gate. Local verification revised this:
 
-Evidence it is an official entry:
-- `.github/workflows/backend-ci.yml:73` runs `./gradlew :application:compileKotlinMacosArm64` in **both** `neton-application` and `privchat-application`.
-- `README.md` documents `:application:compileKotlinMacosArm64` / `:application:linkDebugExecutableMacosArm64` as the build command.
-- `scripts/release-gate-smoke.sh` consumes `application/build/bin/macosArm64/releaseExecutable/application.kexe` — the output of this build.
+- **`privchat-application` (the product / commercial validation project) `:application:compileKotlinMacosArm64` is GREEN.** Verified locally (member fix included, full aggregate compiles).
+- **`neton-application` (the base distribution) standalone `:application:compileKotlinMacosArm64` FAILS** with `Could not find com.netonstream.app:module-system` / `module-infra` inside the `module-member`/`payment`/`platform` included builds.
+
+**Why the product works but the base doesn't** (the load-bearing mechanism):
+- In `privchat-application`, the product modules `privchat-application-module-game` and `...-assistant` each `includeBuild("../privchat-application")`. That pulls the root `privchat-application` (which owns `module-system`/`module-infra` as subprojects) back into the composite **as an included build**. With the root present as an included build, its `module-system`/`module-infra` subprojects become substitutable for the `com.netonstream.app:module-system`(+`infra`) dependencies declared by the canonical `member`/`payment`/`platform` included builds.
+- In `neton-application`, **nothing pulls `neton-application` back into the composite as an included build.** Its `module-system`/`module-infra` are root subprojects, unreachable to its own included `member`/`payment`/`platform` (composite substitution does not flow from an included build up into the including root).
+
+**Consequence for release gating:** the actual product release gate (`privchat-application`) passes. The base-distribution standalone aggregate compile does not — but the base may not be intended to build standalone as a runnable product (products are assembled in forks; see `R5-B`/`R5-C`). So this is **a topology-consistency gap, not a broken product release gate.**
+
+Two things still worth fixing/deciding:
+1. The mechanism that makes the product work relies on a **cyclic `includeBuild`** (root includes game/assistant; game/assistant include the root). It works today but is fragile and non-obvious.
+2. Whether `neton-application` base is expected to build standalone at all (and if so, it needs the same pull-in wiring), and whether `module-system`/`module-infra` should be canonicalized as standalone included builds so the resolution stops depending on the cyclic pull-in.
+
+---
+
+## Problem (base standalone)
+
+`neton-application`'s standalone `:application:compileKotlinMacosArm64` fails because the canonical included business modules (`module-member` / `module-payment` / `module-platform`) cannot resolve `com.netonstream.app:module-system` / `com.netonstream.app:module-infra` — those coordinates are provided only by `neton-application`'s root subprojects, which included builds cannot reach.
+
+Note it IS a documented build entry (`.github/workflows/backend-ci.yml:73` in both repos; README; `scripts/release-gate-smoke.sh` consumes `application.kexe`), so the base's standalone failure is still worth resolving even though the product build is green.
 
 ---
 
@@ -51,15 +67,16 @@ The `settings.gradle.kts` files use a **canonical `../../Neton/` prefix** for in
 
 GitHub Actions `backend-ci.yml` checks the sibling repos out as flat siblings under `$GITHUB_WORKSPACE` (`path: neton-application`, `path: neton`, `path: neton-application-module-member`, ...). `$GITHUB_WORKSPACE` is not named `Neton`, so `../../Neton/...` likely does **not** resolve the same way in CI.
 
-**Open question (needs someone with CI access — `gh` not available in the working environment):** is `:application:compileKotlinMacosArm64` currently GREEN or RED in CI? This determines urgency. If it's been red, the release gate has been non-functional; if green, there is a CI-specific layout convention not captured here that must be documented.
+Whether GitHub Actions CI is green cannot be checked from the working environment (`gh` unavailable). But local verification shows `privchat-application`'s aggregate compiles from the on-disk `Neton/` layout, so the product build works at least locally. The CI-vs-local layout question stands for the CI checkout specifically and should be confirmed by someone with CI access — but it is a robustness concern (make paths layout-independent), not evidence of a broken product gate.
 
 ---
 
 ## Release impact
 
-- `:application` aggregate compile is the official release gate but is currently gated by this topology issue.
+- **Product release gate (`privchat-application`) aggregate compile: GREEN** (verified locally). Release-gate-smoke can build its `application.kexe`.
+- **Base (`neton-application`) standalone aggregate compile: fails** — but base is a distribution template, not necessarily a standalone runnable product.
 - STANDARDIZATION-RC module-level validation (compile + tests + docs) is CLOSED and unaffected.
-- A functioning full aggregate release gate requires this P0 resolved.
+- Fixing this P0 is about topology consistency + removing the fragile cyclic `includeBuild`, not about unblocking a broken product release.
 
 ---
 
