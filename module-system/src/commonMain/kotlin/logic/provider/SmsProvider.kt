@@ -3,9 +3,12 @@ package logic.provider
 import neton.logging.Logger
 
 /**
- * SMS message provider. In v1, logs the message content instead of calling
- * an actual SMS API. The channel config would contain API credentials for
- * providers like Aliyun SMS, Twilio, etc.
+ * SMS message provider (v1 placeholder — no real SMS integration yet).
+ *
+ * Does NOT fake success: a real send would parse `config` for API credentials
+ * (Aliyun SMS, Twilio, etc.) and call the SMS API. Until then [send] throws
+ * [ProviderNotImplementedException] rather than returning `true` — a fake success
+ * would tell the caller a verification code was delivered when it never left the process.
  */
 class SmsProvider(
     private val log: Logger
@@ -14,10 +17,12 @@ class SmsProvider(
     override val type: String = "sms"
 
     override suspend fun send(receiver: String, content: String, config: String): Boolean {
-        // v1: Log the SMS content. In production, parse `config` JSON for
-        // API credentials and call the SMS API (e.g., Aliyun SMS, Twilio).
-        log.info("SMS to $receiver: $content")
-        // TODO: Parse config JSON and call actual SMS HTTP API
-        return true
+        log.warn("sms.provider.not_implemented receiver=${mask(receiver)}")
+        throw ProviderNotImplementedException(
+            "SMS provider is not implemented. Configure a real SMS provider or inject a test double."
+        )
     }
+
+    private fun mask(receiver: String): String =
+        if (receiver.length < 7) "***" else "${receiver.take(3)}****${receiver.takeLast(4)}"
 }

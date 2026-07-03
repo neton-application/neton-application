@@ -3,8 +3,12 @@ package logic.provider
 import neton.logging.Logger
 
 /**
- * Telegram social login provider (v2 placeholder).
- * Telegram uses a widget-based login, not a standard OAuth2 flow.
+ * Telegram social login provider (v1 placeholder — no real widget integration yet).
+ *
+ * Telegram uses a widget-based login (hash validation), not standard OAuth2. Does NOT
+ * fake success: until the widget hash validation and user extraction are implemented,
+ * both methods throw [ProviderNotImplementedException] rather than returning an empty
+ * URL or an empty-`openId` [SocialUserInfo] — an empty identity must never enter the login path.
  */
 class TelegramSocialProvider(
     private val log: Logger
@@ -13,21 +17,16 @@ class TelegramSocialProvider(
     override val type: String = "telegram"
 
     override suspend fun getAuthRedirectUrl(config: String, redirectUri: String): String {
-        // Telegram login widget doesn't use a standard redirect URL.
-        // In v2, return the widget configuration parameters.
-        log.info("Telegram social login redirect requested")
-        return ""
+        log.warn("social.telegram.not_implemented method=getAuthRedirectUrl")
+        throw ProviderNotImplementedException(
+            "Telegram social login is not implemented. Configure the Telegram login widget or inject a test double."
+        )
     }
 
     override suspend fun getUserInfo(config: String, code: String, redirectUri: String): SocialUserInfo {
-        // TODO: Validate Telegram login widget hash and extract user info
-        log.info("Telegram social login code exchange requested")
-        return SocialUserInfo(
-            openId = "",
-            nickname = null,
-            avatar = null,
-            rawUserInfo = null,
-            rawTokenInfo = null
+        log.warn("social.telegram.not_implemented method=getUserInfo")
+        throw ProviderNotImplementedException(
+            "Telegram social login is not implemented. Configure the Telegram login widget or inject a test double."
         )
     }
 }
