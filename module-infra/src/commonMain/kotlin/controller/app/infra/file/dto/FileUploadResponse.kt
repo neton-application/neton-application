@@ -9,7 +9,7 @@ import kotlinx.serialization.Serializable
  * 当唯一引用——url 形态可能在后续 PR-D2 image processing 上线时变化（多变体 URL）。
  */
 @Serializable
-data class AppFileUploadResponse(
+data class FileUploadResponse(
     val fileId: String,
     val url: String,
     val businessType: String,

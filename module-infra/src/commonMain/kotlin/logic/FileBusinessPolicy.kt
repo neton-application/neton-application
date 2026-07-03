@@ -5,7 +5,7 @@ package logic
  *
  * 每个 `businessType` 对应一组上传约束。第一版策略由 [FileBusinessPolicyRegistry]
  * 硬编码 + 进程加载；后续切配置文件 / DB 时只换 registry 实现，
- * 上传链路（[AppFileLogic] / `AppFileController`）零改动。
+ * 上传链路（[FileUploadLogic] / `FileController`）零改动。
  *
  * 目录布局**不是策略的一部分**——脚手架强制 `{businessType}/{ownerUid}/{sha256}.{ext}`，
  * controller / logic 不得自行拼路径。

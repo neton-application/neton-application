@@ -12,7 +12,7 @@ import logic.*
 
 // MANIFEST-P3: 手写 runtime bootstrap。ConfigLogic / FileLogic / JobLogic 已标 @Logic
 // → 生成的 InfraLogicInitializer 装配; moduleId/dependsOn/migrations/路由 由 KSP manifest。
-// 这里留: AppFileLogic (storage + inline policyRegistry) + 日志写入器。
+// 这里留: FileUploadLogic (storage + inline policyRegistry) + 日志写入器。
 object InfraRuntimeBootstrap {
     fun initialize(ctx: NetonContext) {
         val loggerFactory = ctx.get(LoggerFactory::class)
@@ -22,8 +22,8 @@ object InfraRuntimeBootstrap {
         val policyRegistry = FileBusinessPolicyRegistry.default()
         ctx.bind(FileBusinessPolicyRegistry::class, policyRegistry)
         ctx.bind(
-            AppFileLogic::class,
-            AppFileLogic(
+            FileUploadLogic::class,
+            FileUploadLogic(
                 log = loggerFactory.get("logic.app-file"),
                 storage = storage,
                 policyRegistry = policyRegistry,

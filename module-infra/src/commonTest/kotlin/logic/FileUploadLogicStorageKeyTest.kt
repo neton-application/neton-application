@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * 锁定 [AppFileLogic.storageKeyOf] 的物理路径规则
+ * 锁定 [FileUploadLogic.storageKeyOf] 的物理路径规则
  * （spec MODULE_MEMBER_PROFILE_SPEC §4.2）：
  *
  * ```
@@ -17,11 +17,11 @@ import kotlin.test.assertFailsWith
  * - 两层 sha256 前缀分片，防单目录倾斜
  * - 完整 sha256 是文件名的一部分，无碰撞风险
  */
-class AppFileLogicStorageKeyTest {
+class FileUploadLogicStorageKeyTest {
 
     @Test
     fun member_avatar_png_shards_by_sha256_prefix() {
-        val key = AppFileLogic.storageKeyOf(
+        val key = FileUploadLogic.storageKeyOf(
             businessType = "member_avatar",
             sha256Hex = "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
             ext = "png",
@@ -34,7 +34,7 @@ class AppFileLogicStorageKeyTest {
 
     @Test
     fun group_avatar_webp_uses_first_two_bytes_as_shards() {
-        val key = AppFileLogic.storageKeyOf(
+        val key = FileUploadLogic.storageKeyOf(
             businessType = "group_avatar",
             sha256Hex = "0123456789abcdef" + "0".repeat(48),
             ext = "webp",
@@ -50,7 +50,7 @@ class AppFileLogicStorageKeyTest {
     fun owner_uid_is_not_in_storage_key_even_implicitly() {
         // Storage key 函数签名里就没有 ownerUid。这里固定一个具体输出，
         // 防止有人加回 ownerUid 重载或修改算法时偷偷把 uid 拼进路径。
-        val key = AppFileLogic.storageKeyOf(
+        val key = FileUploadLogic.storageKeyOf(
             businessType = "kyc_document",
             sha256Hex = "deadbeef" + "0".repeat(56),
             ext = "pdf",
@@ -70,7 +70,7 @@ class AppFileLogicStorageKeyTest {
 
     @Test
     fun extension_is_preserved_verbatim() {
-        val key = AppFileLogic.storageKeyOf(
+        val key = FileUploadLogic.storageKeyOf(
             businessType = "feedback_attachment",
             sha256Hex = "0".repeat(64),
             ext = "txt",
@@ -81,7 +81,7 @@ class AppFileLogicStorageKeyTest {
     @Test
     fun rejects_too_short_sha256() {
         assertFailsWith<IllegalArgumentException> {
-            AppFileLogic.storageKeyOf(
+            FileUploadLogic.storageKeyOf(
                 businessType = "member_avatar",
                 sha256Hex = "abc",
                 ext = "png",

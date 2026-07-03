@@ -1,8 +1,8 @@
 package controller.app.infra.file
 
-import controller.app.infra.file.dto.AppFileUploadResponse
+import controller.app.infra.file.dto.FileUploadResponse
 import kotlinx.serialization.Serializable
-import logic.AppFileLogic
+import logic.FileUploadLogic
 import neton.core.annotations.Controller
 import neton.core.annotations.Get
 import neton.core.annotations.PathVariable
@@ -31,8 +31,8 @@ import neton.core.interfaces.Identity
  * - `GET  /get/<fileId>` 按 fileId 取文件字节（鉴权见 spec §4.2）
  */
 @Controller("/infra/file")
-class AppFileController(
-    private val fileLogic: AppFileLogic,
+class FileController(
+    private val fileLogic: FileUploadLogic,
 ) {
 
     /**
@@ -40,7 +40,7 @@ class AppFileController(
      *
      * - `Content-Type: multipart/form-data`
      * - 必传字段 `file`（文件字节）+ `businessType`（policy registry 识别）
-     * - 业务规则、MIME / size 校验全在 [AppFileLogic] 内（不在 controller）
+     * - 业务规则、MIME / size 校验全在 [FileUploadLogic] 内（不在 controller）
      * - 频控：每用户 60 秒 30 次（足够正常上传 + 防滥用）
      */
     @Post("/upload")
@@ -53,7 +53,7 @@ class AppFileController(
     suspend fun upload(
         identity: Identity,
         request: HttpRequest,
-    ): AppFileUploadResponse {
+    ): FileUploadResponse {
         if (!request.isMultipart()) {
             throw HttpException(
                 code = NetonErrorCode.INVALID_PARAM_TYPE,
@@ -73,9 +73,9 @@ class AppFileController(
             businessType = businessType,
             file = file,
         )
-        return AppFileUploadResponse(
+        return FileUploadResponse(
             fileId = record.fileId
-                ?: error("AppFileLogic.upload returned record without fileId; logic invariant broken"),
+                ?: error("FileUploadLogic.upload returned record without fileId; logic invariant broken"),
             url = record.url ?: "",
             businessType = record.businessType ?: "",
             mimeType = record.mimeType ?: "application/octet-stream",

@@ -4,7 +4,7 @@ package logic
  * `businessType` → [FileBusinessPolicy] 查表（spec MODULE_MEMBER_PROFILE_SPEC §4.2）。
  *
  * **第一版硬编码内置策略**。后续 v2 切外部配置文件 / DB 时换实现，
- * 上传链路（[AppFileLogic] / `AppFileController`）调用方不改一行。
+ * 上传链路（[FileUploadLogic] / `FileController`）调用方不改一行。
  *
  * 未注册的 businessType 通过 [policyOrThrow] / [policyOrNull] 返回失败 / null，
  * 调用方负责把错抛成 400 `INVALID_BUSINESS_TYPE`。

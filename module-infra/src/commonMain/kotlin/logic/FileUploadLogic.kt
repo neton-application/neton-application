@@ -32,7 +32,7 @@ import table.FileInfoTable
  *
  * 同样地 url 格式也固定 `/app/infra/file/get/{fileId}`，不暴露磁盘路径。
  */
-class AppFileLogic(
+class FileUploadLogic(
     private val log: Logger,
     private val storage: StorageOperator,
     private val policyRegistry: FileBusinessPolicyRegistry,
@@ -72,7 +72,7 @@ class AppFileLogic(
         val bytes = file.bytes()
         if (bytes.size.toLong() != file.size) {
             log.warn(
-                "AppFileLogic.upload: declared size=${file.size} but bytes=${bytes.size} — using actual",
+                "FileUploadLogic.upload: declared size=${file.size} but bytes=${bytes.size} — using actual",
             )
         }
 
@@ -91,7 +91,7 @@ class AppFileLogic(
         }
         if (existing != null) {
             log.info(
-                "AppFileLogic.upload: dedup hit fileId=${existing.fileId} owner=$ownerUid sha=$sha256Hex",
+                "FileUploadLogic.upload: dedup hit fileId=${existing.fileId} owner=$ownerUid sha=$sha256Hex",
             )
             return existing
         }
@@ -118,7 +118,7 @@ class AppFileLogic(
         )
         val inserted = FileInfoTable.insert(record)
         log.info(
-            "AppFileLogic.upload: ok fileId=$fileId owner=$ownerUid type=$businessType size=${bytes.size} sha=$sha256Hex",
+            "FileUploadLogic.upload: ok fileId=$fileId owner=$ownerUid type=$businessType size=${bytes.size} sha=$sha256Hex",
         )
         // KSP 生成的 insert 通常回填自增 id；fileId 等保持原值
         return inserted
@@ -131,7 +131,7 @@ class AppFileLogic(
     }
 
     /**
-     * 按 fileId 读字节。仅供 [AppFileController] 在确认完归属/可见性后调用。
+     * 按 fileId 读字节。仅供 [FileController] 在确认完归属/可见性后调用。
      */
     suspend fun readBytes(record: FileInfo): ByteArray =
         storage.read(record.path)
