@@ -179,8 +179,8 @@ Use this form when the module should evolve as an independent repository.
 1. copy the template as a new sibling repository
 2. rename `rootProject.name`
 3. keep `includeBuild("../neton")`
-4. add `includeBuild("../neton-application")` when the module needs `module-system`
-5. register the new repository in `neton-application/settings.gradle.kts` when composing locally
+4. keep stable dependencies such as `com.netonstream.app:module-system` in the standalone build
+5. register the repository as a source subproject in the aggregate application's `settings.gradle.kts`
 
 External module notes:
 
@@ -188,7 +188,7 @@ External module notes:
 - they should keep their own `README.md` and `SPEC.md`
 - they should avoid accidental coupling to unrelated internal modules
 
-### 6.4 Local composite build registration
+### 6.4 Aggregate source registration
 
 When an external module is introduced, add it to:
 
@@ -197,11 +197,11 @@ When an external module is introduced, add it to:
 Example shape:
 
 ```kotlin
-includeBuild("../neton-application-module-order")
+include(":module-order")
+project(":module-order").projectDir = file("../neton-application-module-order")
 ```
 
-This step is local composition only. It does not mean the module must always
-ship as part of the main application.
+The aggregate root maps stable module coordinates to these projects with Gradle dependency substitution. Do not make an external module `includeBuild` the aggregate application: that creates a cyclic composite. The external repository's own `settings.gradle.kts` remains the standalone build entry.
 
 ## 7. Real Module Expansion Order
 

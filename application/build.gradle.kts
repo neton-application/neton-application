@@ -32,9 +32,9 @@ kotlin {
                 // 通用 base distribution 默认模块。R5-B: game/assistant(产品模块)
                 // 与 com.netonstream.privchat:main(可选 IM 模块)移出 base,由
                 // privchat-application 产品发行版 fork 加回。
-                implementation("com.netonstream.app:module-member")
-                implementation("com.netonstream.app:module-payment")
-                implementation("com.netonstream.app:module-platform")
+                implementation(project(":module-member"))
+                implementation(project(":module-payment"))
+                implementation(project(":module-platform"))
 
                 // 框架依赖
                 implementation("com.netonstream:neton-core")

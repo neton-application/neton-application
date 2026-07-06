@@ -2,9 +2,9 @@
 
 Scope-locked 1.0 surface hardening. **No** HTTP Dispatcher / KSP rework / Kotlin 2.4 / Gradle P3 / repository-service rename.
 
-**Status: STD-0, STD-1, STD-2, STD-3, STD-4 all DONE. APP-COMPOSITE moved out of this RC (see below).**
+**Status: STD-0 through STD-4 and APP-COMPOSITE are DONE.**
 
-Scope note: STANDARDIZATION-RC validates **module-level compile + tests + docs/API cleanup**. Aggregate `:application` compile is a real release gate but is **gated by separate composite-topology work** (see MODULE-SOURCE-CANONICALIZE-P0) and is not a pass condition for this RC.
+Scope note: STANDARDIZATION-RC validates module-level compile, tests, docs/API cleanup, and aggregate application compilation.
 
 Repos touched:
 - `Neton/neton` (framework: database, docs)
@@ -24,20 +24,21 @@ Fork rule: fix upstream `neton-application` first, then apply the same change to
 - STD-4B `neton`: `0086377 docs: mark obsolete http-client design docs + turn neton-http TODO into Roadmap (STD-4B)`
 - STD-4C `neton-application`: module-template-spec Prefer/Avoid labels + this spec update
 
-### APP-COMPOSITE-AUDIT conclusion (audit done, code untouched; findings later corrected by local verification)
+### APP-COMPOSITE conclusion
 - `:application` aggregate compile is a documented build entry (`.github/workflows/backend-ci.yml:73` in both repos; README; `scripts/release-gate-smoke.sh` consumes `application.kexe`).
-- **Correction after local verification:** an earlier draft here said the aggregate compile was a broken release gate — that was over-stated. **`privchat-application` (the product / commercial validation project) aggregate compile is GREEN** (verified locally). Only **`neton-application` base standalone aggregate compile fails.** The product works because its product modules (`game`/`assistant`) `includeBuild("../privchat-application")`, pulling the root (which owns `module-system`/`module-infra`) back into the composite as an included build so `member`/`payment`/`platform` can resolve those coordinates; the base has no such pull-in.
-- **Verdict**: a topology-consistency gap (base standalone build + fragile cyclic `includeBuild`), **not a broken product release gate**. Moved out of STANDARDIZATION-RC into **MODULE-SOURCE-CANONICALIZE-P0** (see `docs/backlog/`), where the corrected findings and options live. Do NOT fix inside this RC.
+- External module repositories remain independently buildable through their own `settings.gradle.kts`.
+- Aggregate applications compose sibling repositories as source subprojects and substitute stable module coordinates with those projects.
+- Both `neton-application` and `privchat-application` aggregate macOS ARM64 compilation pass without local publication or cyclic `includeBuild` wiring.
 
 ### Final state (frozen)
 1. **NETON-1.0-STANDARDIZATION-RC: CLOSED.** STD-0..STD-4 done; module-level compile + tests + docs.
 2. **STD-3 rename fallout fixed.** The `AppFileLogic → FileUploadLogic` rename broke a cross-repo consumer (`neton-application-module-member`, which STD-3's grep missed). Fixed: `MemberProfileLogic.kt` committed as `9daf44b` in that repo; `MemberRuntimeBootstrap.kt:20` one-line change left in the member author's working tree (their WIP) to commit with their branch.
 3. **`privchat-application` aggregate compile: PASS** (verified locally, product path green).
-4. **APP-COMPOSITE audit corrected:** product release gate is green; only the base `neton-application` standalone aggregate compile has a topology gap (relies on a cyclic `includeBuild` that only the product forks provide).
-5. **MODULE-SOURCE-CANONICALIZE-P0: OPEN**, independent backlog, not part of this RC. Not a product-release blocker; fix later (base standalone build + remove the fragile cyclic `includeBuild` + canonical-workspace consistency).
+4. **APP-COMPOSITE: PASS.** Base and product aggregate builds use the same source-subproject rule.
+5. **MODULE-SOURCE-CANONICALIZE-P0: CLOSED.** Cyclic composite wiring and parent-directory-name dependency were removed.
 6. **Cross-repo rename lesson captured** in `ENGINEERING_RULES.md` §3.5.1: renaming a public symbol must grep **all** canonical included builds, not only the current app fork tree.
 
-Do not continue expanding this line: no build-topology changes, no touching others' WIP. Next steps are the member author's (commit the `MemberRuntimeBootstrap.kt` one-liner, run RP-7-A outbox smoke, confirm release-gate-smoke), then decide whether to open MODULE-SOURCE-CANONICALIZE-P0.
+Do not continue expanding this line into unrelated framework work.
 
 ---
 

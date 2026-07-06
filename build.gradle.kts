@@ -7,4 +7,14 @@ plugins {
 subprojects {
     group = "com.netonstream.app"
     version = "1.0.0"
+
+    configurations.configureEach {
+        resolutionStrategy.dependencySubstitution {
+            substitute(module("com.netonstream.app:module-system")).using(project(":module-system"))
+            substitute(module("com.netonstream.app:module-infra")).using(project(":module-infra"))
+            substitute(module("com.netonstream.app:module-member")).using(project(":module-member"))
+            substitute(module("com.netonstream.app:module-payment")).using(project(":module-payment"))
+            substitute(module("com.netonstream.app:module-platform")).using(project(":module-platform"))
+        }
+    }
 }

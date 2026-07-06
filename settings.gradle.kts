@@ -11,17 +11,18 @@ rootProject.name = "neton-application"
 // 框架依赖（composite build）
 includeBuild("../neton")
 
-// 通用 base distribution 默认模块（system/infra in-tree + member/payment/platform）。
-// R5-B: game/assistant 属 PrivChat 产品模块、module-privchat 属可选 IM 模块，
-// 均移出通用 base，由 privchat-application 产品发行版 fork 自行 include。
-// canonicalize：统一用 ../../Neton/ 前缀指向 canonical 通用模块，不再指向 privchat fork 目录
-includeBuild("../../Neton/neton-application-module-member")
-includeBuild("../../Neton/neton-application-module-payment")
-includeBuild("../../Neton/neton-application-module-platform")
-
 // 核心模块
 include(":module-system")
 include(":module-infra")
+
+// Canonical sibling repositories are assembled as source subprojects here.
+// Each repository keeps its own settings.gradle.kts and remains independently buildable.
+include(":module-member")
+project(":module-member").projectDir = file("../neton-application-module-member")
+include(":module-payment")
+project(":module-payment").projectDir = file("../neton-application-module-payment")
+include(":module-platform")
+project(":module-platform").projectDir = file("../neton-application-module-platform")
 
 // 应用入口
 include(":application")
