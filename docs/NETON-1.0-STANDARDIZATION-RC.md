@@ -110,7 +110,7 @@ Verify: generated routes unchanged, aggregate compile, file API smoke.
 
 ## STD-4 — Docs / API cleanup (P2) — ✅ DONE (STD-4A find() removed; STD-4B http-client docs OBSOLETE + neton-http Roadmap; STD-4C module-template-spec Prefer/Avoid)
 
-- [ ] `neton/docs/superpowers/` old neton-http-client design docs → archive or mark `OBSOLETE` header (superseded by neton-http integrated NetonHttpClient). Also assess whether the physical `neton/neton-http-client/` dir is now vestigial (still exists alongside `neton-http`) → list for removal/archive, do not delete blindly.
+- [x] The obsolete `neton-http-client` module and historical in-repository design docs were removed. Outbound HTTP client APIs live in `neton-http`; canonical documentation lives in `neton-docs`.
 - [ ] `neton/neton-http/README.md:200` `## TODO` → `## Roadmap / Deferred after 1.0` with explicit supported/deferred + rationale.
 - [ ] `TableDefRegistry.kt:43` `@Deprecated` → add removal version to message (removed in 1.1 or before 1.0 final) or delete if no downstream caller.
 - [ ] `module-template-spec.md:95` — lead with positive examples (`controller.app.UserController`), keep `AppUserController` only inside an explicit Anti-pattern section.
