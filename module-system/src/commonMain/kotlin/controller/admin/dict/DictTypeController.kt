@@ -18,11 +18,12 @@ class DictTypeController(
     suspend fun page(
         @Query pageNo: Int = 1,
         @Query pageSize: Int = 10,
+        @Query keyword: String? = null,
         @Query name: String? = null,
         @Query type: String? = null,
         @Query status: Int? = null
     ): PageResponse<DictTypeVO> {
-        return dictLogic.pageDictTypes(pageNo, pageSize, name, type, status)
+        return dictLogic.pageDictTypes(pageNo, pageSize, keyword, name, type, status)
     }
 
     @Get("/simple-list")

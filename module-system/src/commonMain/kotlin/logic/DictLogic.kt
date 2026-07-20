@@ -28,6 +28,7 @@ class DictLogic(
     suspend fun pageDictTypes(
         page: Int,
         size: Int,
+        keyword: String? = null,
         name: String? = null,
         type: String? = null,
         status: Int? = null
@@ -35,6 +36,12 @@ class DictLogic(
         val result = DictTypeTable.query {
             where {
                 and(
+                    whenNotBlank(keyword) {
+                        or(
+                            DictType::name like "%$it%",
+                            DictType::type like "%$it%"
+                        )
+                    },
                     whenNotBlank(name) { DictType::name like "%$it%" },
                     whenNotBlank(type) { DictType::type like "%$it%" },
                     whenPresent(status) { DictType::status eq it }
@@ -72,8 +79,13 @@ class DictLogic(
     }
 
     suspend fun updateDictType(dictType: DictType) {
-        DictTypeTable.get(dictType.id)
+        val existing = DictTypeTable.get(dictType.id)
             ?: throw NotFoundException("Dict type not found")
+
+        // dictType is the stable foreign key used by all dictionary values and caches.
+        if (existing.type != dictType.type) {
+            throw BadRequestException("Dict type identifier cannot be changed")
+        }
 
         DictTypeTable.update(dictType)
 

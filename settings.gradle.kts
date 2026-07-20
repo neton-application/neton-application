@@ -10,6 +10,7 @@ rootProject.name = "neton-application"
 
 // 框架依赖（composite build）
 includeBuild("../neton")
+includeBuild("../geolite4k")
 
 // 核心模块
 include(":module-system")

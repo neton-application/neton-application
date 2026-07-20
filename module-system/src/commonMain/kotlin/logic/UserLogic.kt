@@ -167,6 +167,9 @@ class UserLogic(
         email = email,
         mobile = mobile,
         avatar = avatar,
+        sex = sex,
+        deptId = deptId,
+        remark = remark,
         status = status,
         createdAt = createdAt,
         updatedAt = updatedAt
