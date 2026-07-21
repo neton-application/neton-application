@@ -12,12 +12,13 @@ rootProject.name = "neton-application"
 includeBuild("../neton")
 includeBuild("../geolite4k")
 
-// 核心模块
-include(":module-system")
-include(":module-infra")
-
 // Canonical sibling repositories are assembled as source subprojects here.
 // Each repository keeps its own settings.gradle.kts and remains independently buildable.
+// application 仅做装配 —— 所有模块（含 system/infra 核心）都是独立 canonical 仓。
+include(":module-system")
+project(":module-system").projectDir = file("../neton-application-module-system")
+include(":module-infra")
+project(":module-infra").projectDir = file("../neton-application-module-infra")
 include(":module-member")
 project(":module-member").projectDir = file("../neton-application-module-member")
 include(":module-payment")
