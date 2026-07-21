@@ -10,7 +10,7 @@ data class UserVO(
     val email: String? = null,
     val mobile: String? = null,
     val avatar: String? = null,
-    val sex: Int = 0,
+    val gender: Int = 0,
     val deptId: Long = 0,
     val remark: String? = null,
     val status: Int,

@@ -35,7 +35,7 @@ data class CreateUserRequest(
 
     @property:Min(0)
     @property:Max(2)
-    val sex: Int = 0,
+    val gender: Int = 0,
 
     @property:Min(0)
     @property:Max(1)
@@ -69,7 +69,7 @@ data class UpdateUserRequest(
 
     @property:Min(0)
     @property:Max(2)
-    val sex: Int? = null,
+    val gender: Int? = null,
 
     @property:Min(0)
     @property:Max(1)

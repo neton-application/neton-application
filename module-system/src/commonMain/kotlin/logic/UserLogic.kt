@@ -118,7 +118,7 @@ class UserLogic(
             nickname = request.nickname,
             email = request.email,
             mobile = request.mobile,
-            sex = request.sex,
+            gender = request.gender,
             deptId = request.deptId ?: 0,
             remark = request.remark,
             status = request.status
@@ -134,7 +134,7 @@ class UserLogic(
             nickname = request.nickname ?: existing.nickname,
             email = request.email ?: existing.email,
             mobile = request.mobile ?: existing.mobile,
-            sex = request.sex ?: existing.sex,
+            gender = request.gender ?: existing.gender,
             deptId = request.deptId ?: existing.deptId,
             remark = request.remark ?: existing.remark,
             status = request.status ?: existing.status
@@ -167,7 +167,7 @@ class UserLogic(
         email = email,
         mobile = mobile,
         avatar = avatar,
-        sex = sex,
+        gender = gender,
         deptId = deptId,
         remark = remark,
         status = status,
