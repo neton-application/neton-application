@@ -79,15 +79,19 @@ internal object MigrationCommandRunner {
             return EXIT_DB_CONNECT_FAILED
         }
 
-        // ----- 3. 聚合 sources(模块自管,application 不改写) -----
-        val sources = ApplicationMigrationSources.collect(modules, cfg.migration.dialect)
+        return try {
+            // ----- 3. 聚合 sources(模块自管,application 不改写) -----
+            val sources = ApplicationMigrationSources.collect(modules, cfg.migration.dialect)
 
-        // ----- 4. 跑 engine -----
-        val engine = MigrationEngine(dbContext, cfg.migration)
-        val result = engine.run(command, sources)
+            // ----- 4. 跑 engine -----
+            val engine = MigrationEngine(dbContext, cfg.migration)
+            val result = engine.run(command, sources)
 
-        // ----- 5. 格式化 + exit code -----
-        return formatAndExitCode(result)
+            // ----- 5. 格式化 + exit code -----
+            formatAndExitCode(result)
+        } finally {
+            SqlxDatabase.close()
+        }
     }
 
     // ============================================================

@@ -8,7 +8,7 @@ import table.UserRoleTable
 import table.RoleTable
 import model.UserRole
 import model.Role
-import neton.security.jwt.JwtAuthenticatorV1
+import neton.security.jwt.JwtAuthenticator
 import neton.core.http.BadRequestException
 import neton.core.http.NotFoundException
 import neton.logging.Logger
@@ -21,7 +21,7 @@ import neton.security.password.PasswordHasher
 
 class AuthLogic(
     private val log: Logger,
-    private val jwt: JwtAuthenticatorV1,
+    private val jwt: JwtAuthenticator,
     // 生产必传（module-system 已注入）；为空则退化 emptySet（仅框架 example 的极简构造）。
     private val permissionLogic: PermissionLogic? = null,
     private val messageSendLogic: MessageSendLogic? = null,

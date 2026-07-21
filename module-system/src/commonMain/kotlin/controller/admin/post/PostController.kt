@@ -19,7 +19,7 @@ class PostController(
 ) {
 
     @Get("/page")
-    @Permission("system:post:page")
+    @Permission("system:post:query")
     suspend fun page(
         @Query pageNo: Int = 1,
         @Query pageSize: Int = 10,
@@ -29,7 +29,7 @@ class PostController(
     ) = postLogic.page(pageNo, pageSize, name, code, status)
 
     @Get("/simple-list")
-    @Permission("system:post:list")
+    @Permission("system:post:query")
     suspend fun listAllSimple(): List<PostVO> = postLogic.listAllSimple()
 
     @Get("/get/{id}")

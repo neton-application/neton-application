@@ -36,6 +36,12 @@ class FileUploadLogic(
     private val log: Logger,
     private val storage: StorageOperator,
     private val policyRegistry: FileBusinessPolicyRegistry,
+    /**
+     * 对外可访问的绝对前缀(如 `https://h5.fflunp.cn/api`)。配置后下发的
+     * 文件 URL 为绝对地址——头像等经 <img>/Image 加载,相对路径在
+     * 站点域名 != API 域名的部署形态下无法解析。空则保持相对路径。
+     */
+    private val publicBaseUrl: String? = null,
 ) {
 
     /**
@@ -100,7 +106,7 @@ class FileUploadLogic(
         storage.write(storageKey, bytes, WriteOptions())
 
         val fileId = generateFileId()
-        val url = publicUrlOf(fileId)
+        val url = absoluteUrlOf(fileId)
         val now = Clock.System.now().toEpochMilliseconds()
 
         val record = FileInfo(
@@ -141,13 +147,21 @@ class FileUploadLogic(
      * - PUBLIC：任意已登录用户可读
      * - PRIVATE：仅 owner 可读
      */
-    fun isReadableBy(record: FileInfo, viewerUid: Long): Boolean {
+    /** 配置了 publicBaseUrl 则拼绝对 URL,否则相对(spec §4.2)。 */
+    private fun absoluteUrlOf(fileId: String): String {
+        val rel = publicUrlOf(fileId)
+        val base = publicBaseUrl?.trim()?.trimEnd('/')?.takeIf { it.isNotEmpty() } ?: return rel
+        return base + rel
+    }
+
+    fun isReadableBy(record: FileInfo, viewerUid: Long?): Boolean {
         if (record.status != 1) return false
         val type = record.businessType ?: return false
         val policy = policyRegistry.policyOrNull(type) ?: return false
         return when (policy.visibility) {
+            // PUBLIC(头像等)匿名可读:<img> 标签加载带不了鉴权头
             FileVisibility.PUBLIC -> true
-            FileVisibility.PRIVATE -> record.ownerUid == viewerUid
+            FileVisibility.PRIVATE -> viewerUid != null && record.ownerUid == viewerUid
         }
     }
 

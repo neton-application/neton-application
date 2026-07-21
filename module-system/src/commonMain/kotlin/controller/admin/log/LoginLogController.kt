@@ -12,7 +12,7 @@ class LoginLogController(
 ) {
 
     @Get("/page")
-    @Permission("system:login-log:page")
+    @Permission("system:login-log:query")
     suspend fun page(
         @Query pageNo: Int = 1,
         @Query pageSize: Int = 10,

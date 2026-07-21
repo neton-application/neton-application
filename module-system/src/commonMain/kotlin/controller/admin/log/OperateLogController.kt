@@ -12,7 +12,7 @@ class OperateLogController(
 ) {
 
     @Get("/page")
-    @Permission("system:operate-log:page")
+    @Permission("system:operate-log:query")
     suspend fun page(
         @Query pageNo: Int = 1,
         @Query pageSize: Int = 10,

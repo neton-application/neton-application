@@ -20,6 +20,8 @@ import neton.logging.Logger
 @Controller("/infra/job")
 class JobController(
     private val log: Logger,
+    // RP-7-B1：接 neton-jobs 调度器，让「立即执行」真触发（scheduler.trigger 用 @Job.id=handler_name）。
+    private val scheduler: neton.jobs.JobScheduler,
     private val jobLogic: JobLogic = JobLogic(log)
 ) {
 
@@ -90,7 +92,10 @@ class JobController(
     @Put("/trigger/{id}")
     @Permission("infra:job:trigger")
     suspend fun trigger(@PathVariable id: Long) {
-        jobLogic.triggerJob(id)
+        val job = jobLogic.getJob(id) ?: throw NotFoundException("Job not found")
+        // 立即触发一次（忽略 enabled 开关，仍走 SINGLE_NODE 锁）。handler 不存在则 scheduler 内部忽略。
+        scheduler.trigger(job.handlerName)
+        log.info("job.trigger", mapOf("id" to id, "handler" to job.handlerName))
     }
 
     @Get("/get_next_times/{id}")

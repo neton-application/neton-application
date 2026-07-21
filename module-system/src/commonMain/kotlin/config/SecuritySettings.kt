@@ -2,7 +2,7 @@ package config
 
 import neton.core.component.NetonContext
 import neton.core.config.ConfigLoader
-import neton.security.jwt.JwtAuthenticatorV1
+import neton.security.jwt.JwtAuthenticator
 
 private const val APP_CONFIG_PATH = "config"
 private const val JWT_SECRET_PATH = "security.jwt.secretKey"
@@ -45,9 +45,9 @@ fun loadJwtRuntimeConfig(ctx: NetonContext): JwtRuntimeConfig {
     )
 }
 
-fun buildJwtAuthenticator(ctx: NetonContext): JwtAuthenticatorV1 {
+fun buildJwtAuthenticator(ctx: NetonContext): JwtAuthenticator {
     val runtimeConfig = loadJwtRuntimeConfig(ctx)
-    return JwtAuthenticatorV1(
+    return JwtAuthenticator(
         secretKey = runtimeConfig.secretKey,
         headerName = runtimeConfig.headerName,
         tokenPrefix = runtimeConfig.tokenPrefix

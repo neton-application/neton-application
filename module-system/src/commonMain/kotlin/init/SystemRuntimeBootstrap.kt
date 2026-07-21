@@ -2,7 +2,7 @@ package init
 
 import neton.core.component.NetonContext
 import neton.logging.LoggerFactory
-import neton.security.jwt.JwtAuthenticatorV1
+import neton.security.jwt.JwtAuthenticator
 import config.buildJwtAuthenticator
 import config.loadSuperAdminCodes
 import security.CodeMatchSuperAdminEvaluator
@@ -21,8 +21,8 @@ object SystemRuntimeBootstrap {
     fun initialize(ctx: NetonContext) {
         val loggerFactory = ctx.get(LoggerFactory::class)
         // ===== 创建共享服务 =====
-        val jwt = ctx.getOrNull(JwtAuthenticatorV1::class) ?: buildJwtAuthenticator(ctx)
-        ctx.bind(JwtAuthenticatorV1::class, jwt)
+        val jwt = ctx.getOrNull(JwtAuthenticator::class) ?: buildJwtAuthenticator(ctx)
+        ctx.bind(JwtAuthenticator::class, jwt)
 
         // SuperAdminEvaluator —— rbac-spec §7。启动日志只打 count, 不打具体 codes。
         val superAdminCodes = loadSuperAdminCodes(ctx)

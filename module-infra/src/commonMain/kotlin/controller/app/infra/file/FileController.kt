@@ -3,6 +3,7 @@ package controller.app.infra.file
 import controller.app.infra.file.dto.FileUploadResponse
 import kotlinx.serialization.Serializable
 import logic.FileUploadLogic
+import neton.core.annotations.AllowAnonymous
 import neton.core.annotations.Controller
 import neton.core.annotations.Get
 import neton.core.annotations.PathVariable
@@ -86,20 +87,22 @@ class FileController(
     /**
      * 按 fileId 取文件字节。
      *
-     * - PUBLIC（avatar / generic_image）任意已登录用户可读
-     * - PRIVATE（feedback / kyc）仅 owner 可读
+     * - PUBLIC（avatar / generic_image）**匿名可读**——头像经 <img>/Image 标签
+     *   加载,带不了 Authorization header;内容寻址 fileId 本身即不可猜的凭据
+     * - PRIVATE（feedback / kyc）仅 owner 可读(匿名一律拒)
      * - 不存在 / status 非 active → 404
      */
+    @AllowAnonymous
     @Get("/get/{fileId}")
     suspend fun get(
-        identity: Identity,
+        identity: Identity?,
         response: HttpResponse,
         @PathVariable fileId: String,
     ) {
         val record = fileLogic.getByFileId(fileId)
             ?: throw NotFoundException("FILE_NOT_FOUND: $fileId")
 
-        val viewerUid = identity.id.toLong()
+        val viewerUid = identity?.id?.toLongOrNull()
         if (!fileLogic.isReadableBy(record, viewerUid)) {
             throw HttpException(
                 code = NetonErrorCode.PERMISSION_DENIED,
@@ -108,6 +111,9 @@ class FileController(
         }
 
         val bytes = fileLogic.readBytes(record)
+        // 内容寻址(fileId 由 SHA-256 派生,内容变即换 URL)⇒ 永久缓存安全;
+        // 浏览器 HTTP 缓存借此达到微信式头像缓存等效(AVATAR_CACHE_SPEC §2)。
+        response.header("Cache-Control", "public, max-age=31536000, immutable")
         response.bytes(
             data = bytes,
             contentType = record.mimeType ?: "application/octet-stream",

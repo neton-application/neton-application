@@ -21,17 +21,39 @@ object InfraRuntimeBootstrap {
         val storage = ctx.get(StorageOperator::class)
         val policyRegistry = FileBusinessPolicyRegistry.default()
         ctx.bind(FileBusinessPolicyRegistry::class, policyRegistry)
+        // 文件公网前缀:conf [infra] file_public_base_url(如 https://h5.fflunp.cn/api),
+        // 配置后下发绝对 URL,三端 <img>/Image 直接可加载。
+        val infraConfig = neton.core.config.ConfigLoader.loadModuleConfig(moduleName = "infra")
+        val filePublicBaseUrl = neton.core.config.ConfigLoader
+            .getString(infraConfig, "file_public_base_url")?.trim()?.takeIf { it.isNotEmpty() }
         ctx.bind(
             FileUploadLogic::class,
             FileUploadLogic(
                 log = loggerFactory.get("logic.app-file"),
                 storage = storage,
                 policyRegistry = policyRegistry,
+                publicBaseUrl = filePublicBaseUrl,
             ),
         )
 
         // 注册 API 日志写入器
         ctx.bind(AccessLogWriter::class, DbAccessLogWriter())
         ctx.bind(ErrorLogWriter::class, DbErrorLogWriter())
+
+        // RP-7-B1: DB 驱动定时任务 —— infra_jobs 为运行期调度真源 + infra_job_logs 执行日志。
+        // JobsComponent.prepare 消费 JobConfigSource（upsert 代码 @Job + DB enabled 覆盖）；
+        // CoroutineJobScheduler 消费 JobExecutionListener（每次执行写日志）。
+        // JobRegistry 由 JobsComponent 组件 init 绑定、模块 init 阶段被 @Job 片段填充 → 用 lazy provider。
+        ctx.bind(
+            neton.jobs.JobConfigSource::class,
+            logic.DbBackedJobConfigSource(
+                loggerFactory.get("jobs.config-source"),
+                registryProvider = { ctx.get(neton.jobs.JobRegistry::class) },
+            ),
+        )
+        ctx.bind(
+            neton.jobs.JobExecutionListener::class,
+            logic.JobLogListener(loggerFactory.get("jobs.log-listener")),
+        )
     }
 }

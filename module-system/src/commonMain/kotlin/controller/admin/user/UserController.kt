@@ -16,7 +16,7 @@ class UserController(
 ) {
 
     @Get("/page")
-    @Permission("system:user:page")
+    @Permission("system:user:query")
     suspend fun page(
         @Query pageNo: Int = 1,
         @Query pageSize: Int = 10,
@@ -28,7 +28,7 @@ class UserController(
     }
 
     @Get("/simple-list")
-    @Permission("system:user:list")
+    @Permission("system:user:query")
     suspend fun listAllSimple(): List<UserVO> {
         return userLogic.listAllSimple()
     }

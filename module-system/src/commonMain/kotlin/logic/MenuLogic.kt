@@ -52,14 +52,16 @@ class MenuLogic(
     }
 
     suspend fun update(menu: Menu) {
-        MenuTable.get(menu.id)
+        val existing = MenuTable.get(menu.id)
             ?: throw NotFoundException("Menu not found")
 
         if (menu.parentId == menu.id) {
             throw BadRequestException("Parent menu cannot be itself")
         }
 
-        MenuTable.update(menu)
+        // 全列 update：请求构造的 Menu 不带时间戳，必须保留原行 created_at/updated_at，
+        // 否则写 null 触发 23502 非空约束（menu/update 500 的根因）。
+        MenuTable.update(menu.copy(createdAt = existing.createdAt, updatedAt = existing.updatedAt))
     }
 
     suspend fun delete(id: Long) {

@@ -14,7 +14,7 @@ class DictDataController(
 ) {
 
     @Get("/page")
-    @Permission("system:dict:page")
+    @Permission("system:dict:query")
     suspend fun page(
         @Query pageNo: Int = 1,
         @Query pageSize: Int = 10,

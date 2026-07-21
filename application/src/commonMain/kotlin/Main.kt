@@ -5,6 +5,7 @@ import neton.core.Neton
 import neton.core.component.cors
 import neton.core.generated.GeneratedNetonConfigRegistry
 import neton.database.database
+import neton.jobs.jobs
 import neton.http.http
 import neton.redis.redis
 import neton.routing.routing
@@ -75,6 +76,11 @@ fun main(args: Array<String>) {
         // Redis 装载（SMS code 暂存、限流、token 黑名单等都需要）。
         // 配置文件 config/redis.conf；缺省 host=127.0.0.1 port=6379。
         redis { }
+
+        // 定时任务调度（RP-7-B1）。@Job 代码定义 handler；module-infra 的 DbBackedJobConfigSource
+        // 让 infra_jobs 成为运行期真源（启用/停用），JobLogListener 写 infra_job_logs 执行日志。
+        // 需在 redis 之后（SINGLE_NODE 依赖 LockManager）、modules 之前（@Job 片段在模块 init 注册）。
+        jobs { }
 
         // 文件存储：用户态上传统一走 default source（spec
         // MODULE_MEMBER_PROFILE_SPEC §4.2）。配置在 config/storage.conf；

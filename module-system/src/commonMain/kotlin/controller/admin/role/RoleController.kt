@@ -14,7 +14,7 @@ class RoleController(
 ) {
 
     @Get("/page")
-    @Permission("system:role:page")
+    @Permission("system:role:query")
     suspend fun page(
         @Query pageNo: Int = 1,
         @Query pageSize: Int = 10,
@@ -26,7 +26,7 @@ class RoleController(
     }
 
     @Get("/simple-list")
-    @Permission("system:role:list")
+    @Permission("system:role:query")
     suspend fun listAllSimple(): List<RoleVO> {
         return roleLogic.listAllSimple()
     }

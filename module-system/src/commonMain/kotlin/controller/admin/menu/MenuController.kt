@@ -13,13 +13,13 @@ class MenuController(
 ) {
 
     @Get("/list")
-    @Permission("system:menu:list")
+    @Permission("system:menu:query")
     suspend fun list(): List<MenuVO> {
         return menuLogic.listFlat()
     }
 
     @Get("/simple-list")
-    @Permission("system:menu:list")
+    @Permission("system:menu:query")
     suspend fun listAllSimple(): List<MenuVO> {
         return menuLogic.listAllSimple()
     }

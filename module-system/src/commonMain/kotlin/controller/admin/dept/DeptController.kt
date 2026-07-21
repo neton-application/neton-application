@@ -12,11 +12,11 @@ class DeptController(
 ) {
 
     @Get("/list")
-    @Permission("system:dept:list")
+    @Permission("system:dept:query")
     suspend fun list(): List<DeptVO> = deptLogic.list()
 
     @Get("/simple-list")
-    @Permission("system:dept:list")
+    @Permission("system:dept:query")
     suspend fun listAllSimple(): List<DeptVO> = deptLogic.listAllSimple()
 
     @Get("/get/{id}")

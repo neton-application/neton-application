@@ -44,27 +44,20 @@ internal object MigrationStartupPrecheck {
                 return "migration config invalid: ${r.message}"
         }
 
-        // 初始化 DB — 这里直接复用全局 SqlxDatabase.initialize, Neton.run 主流程后续会再 init
-        // 一次(sqlx4k 允许覆盖). 这是 dev 便利路径; 生产建议:
-        //   先 `application.kexe migrate up` 跑完, 再 `application.kexe` 起服务.
-        // 这种部署节奏下 precheck 只是兜底, 实际命中也只是 fail-fast 拒绝启动.
         val dbContext = try {
             SqlxDatabase.initialize(cfg.database)
         } catch (e: Throwable) {
             return "database connect failed: ${e.message}"
         }
 
-        val sources = ApplicationMigrationSources.collect(modules, cfg.migration.dialect)
-        if (sources.isEmpty()) {
-            // 没有模块声明当前 dialect 的 SQL = 没有 schema 要管。早退,不打扰启动。
-            // (典型场景: MEMORY driver dev 路径, modules 全部只声明 POSTGRESQL)
-            return null
-        }
+        try {
+            val sources = ApplicationMigrationSources.collect(modules, cfg.migration.dialect)
+            if (sources.isEmpty()) return null
 
-        val engine = MigrationEngine(dbContext, cfg.migration)
-        val result = runBlocking { engine.run(MigrationCommand.STATUS, sources) }
+            val engine = MigrationEngine(dbContext, cfg.migration)
+            val result = runBlocking { engine.run(MigrationCommand.STATUS, sources) }
 
-        return when (result) {
+            return when (result) {
             is MigrationResult.Aborted ->
                 "migration precheck aborted: ${result.reason}\n" +
                     "please run: ./application.kexe migrate up"
@@ -118,6 +111,9 @@ internal object MigrationStartupPrecheck {
 
             // STATUS 命令不应返回 Up / Verify, 安全起见兜底
             else -> "migration precheck unexpected result type: $result"
+            }
+        } finally {
+            runBlocking { SqlxDatabase.close() }
         }
     }
 }
