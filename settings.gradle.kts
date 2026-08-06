@@ -12,6 +12,9 @@ rootProject.name = "neton-application"
 includeBuild("../neton")
 includeBuild("../geolite4k")
 
+// module-cs 经它访问 PrivChat service API（独立库，非 application module）
+includeBuild("../../privchat/privchat-service-client")
+
 // Canonical sibling repositories are assembled as source subprojects here.
 // Each repository keeps its own settings.gradle.kts and remains independently buildable.
 // application 仅做装配 —— 所有模块（含 system/infra 核心）都是独立 canonical 仓。
@@ -25,6 +28,8 @@ include(":module-payment")
 project(":module-payment").projectDir = file("../neton-application-module-payment")
 include(":module-platform")
 project(":module-platform").projectDir = file("../neton-application-module-platform")
+include(":module-cs")
+project(":module-cs").projectDir = file("../neton-application-module-cs")
 
 // 应用入口
 include(":application")
