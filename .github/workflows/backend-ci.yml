@@ -71,3 +71,70 @@ jobs:
       - name: Compile application
         working-directory: neton-application
         run: ./gradlew :application:compileKotlinMacosArm64
+
+  # Outbox store contract against a real PostgreSQL. Runs the dedicated
+  # postgresContractTest task; the regular unit test task does not touch a database.
+  outbox-postgres-contract:
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout application
+        uses: actions/checkout@v4
+        with:
+          path: neton-application
+
+      - name: Checkout framework
+        uses: actions/checkout@v4
+        with:
+          repository: netonframework/neton
+          path: neton
+
+      - name: Checkout infra module
+        uses: actions/checkout@v4
+        with:
+          repository: neton-application/neton-application-module-infra
+          path: neton-application-module-infra
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Start PostgreSQL
+        run: |
+          brew install postgresql@16
+          brew services start postgresql@16
+          for i in $(seq 1 30); do
+            /opt/homebrew/opt/postgresql@16/bin/pg_isready -h localhost && break
+            sleep 1
+          done
+          # 建一个带 CREATEDB 的测试角色：套件会为每个用例 CREATE / DROP 临时库
+          /opt/homebrew/opt/postgresql@16/bin/psql -d postgres -c \
+            "CREATE ROLE evtest WITH LOGIN CREATEDB PASSWORD 'evtest';"
+          /opt/homebrew/opt/postgresql@16/bin/psql -d postgres -c \
+            "CREATE DATABASE evtest_admin OWNER evtest;"
+
+      - name: Generate KSP outputs for infra
+        working-directory: neton-application
+        run: |
+          rm -rf module-system/build/generated module-infra/build/generated
+          ./gradlew :module-system:kspKotlinMacosArm64 --rerun-tasks
+          ./gradlew :module-infra:kspKotlinMacosArm64 --rerun-tasks
+
+      - name: Run outbox PostgreSQL contract tests
+        working-directory: neton-application
+        env:
+          EVENT_DB_URI: postgresql://evtest:evtest@localhost:5432/evtest_admin
+        run: ./gradlew :module-infra:postgresContractTest
+
+      - name: Assert no temporary databases left behind
+        if: always()
+        run: |
+          left=$(/opt/homebrew/opt/postgresql@16/bin/psql -d postgres -tAc \
+            "SELECT count(*) FROM pg_database WHERE datname LIKE 'evtest_%' AND datname <> 'evtest_admin';")
+          echo "leftover temp databases: $left"
+          test "$left" = "0"
+
