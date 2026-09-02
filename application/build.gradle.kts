@@ -42,6 +42,8 @@ kotlin {
                 implementation("com.netonstream:neton-routing")
                 implementation("com.netonstream:neton-security")
                 implementation("com.netonstream:neton-http")
+                // 引擎：无参 http { } 与 HttpClient.create { } 由它提供
+                implementation("com.netonstream:neton-http-hyper4k")
                 implementation("com.netonstream:neton-database")
                 implementation("com.netonstream:neton-logging")
                 implementation("com.netonstream:neton-validation")

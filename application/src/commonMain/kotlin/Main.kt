@@ -7,6 +7,10 @@ import neton.core.generated.GeneratedNetonConfigRegistry
 import neton.database.database
 import neton.jobs.jobs
 import neton.http.http
+import neton.http.client.HttpClient
+import neton.http.client.create
+import neton.core.component.NetonContext
+import neton.core.component.NetonLifecycle
 import neton.redis.redis
 import neton.routing.routing
 import neton.security.security
@@ -39,6 +43,22 @@ fun main(args: Array<String>) {
 
     Neton.run(args) {
         configRegistry(GeneratedNetonConfigRegistry)
+
+        // 出站 HTTP 客户端：应用创建、应用绑定、应用关闭。system（短信）、payment（支付平台）、
+        // storage、ai 只借用同一个实例，各自按请求给超时。引擎跟随本工程的依赖
+        // （neton-http-hyper4k），源码里不出现引擎名。
+        val outboundHttp = HttpClient.create {
+            connectMillis = 3_000
+            requestMillis = 15_000
+            socketMillis = 15_000
+        }
+        bind(HttpClient::class, outboundHttp)
+        onStart {
+            get(NetonContext::class).lifecycle.register("outbound-http-client", object : NetonLifecycle {
+                override suspend fun start() = Unit
+                override suspend fun stop() = outboundHttp.close()
+            })
+        }
 
         // CORS via DSL —— neton 的 TomlParser 不支持 array 语法，application.conf
         // 里写 [cors] allowedOrigins = [...] 会被吞掉（详见 HttpComponent.kt:36），
