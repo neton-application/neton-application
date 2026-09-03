@@ -8,6 +8,7 @@ import neton.database.database
 import neton.jobs.jobs
 import neton.http.http
 import neton.http.client.HttpClient
+import neton.http.client.HttpClientProvider
 import neton.http.client.create
 import neton.core.component.NetonContext
 import neton.core.component.NetonLifecycle
@@ -53,6 +54,9 @@ fun main(args: Array<String>) {
             socketMillis = 15_000
         }
         bind(HttpClient::class, outboundHttp)
+        // 需要按运行时配置建多个客户端的模块（AI 网关：每个上游渠道各自的代理与超时）
+        // 通过这个 provider 建；引擎仍只在本工程的 build 文件里出现。
+        bind(HttpClientProvider::class, HttpClientProvider { HttpClient.create(it) })
         onStart {
             get(NetonContext::class).lifecycle.register("outbound-http-client", object : NetonLifecycle {
                 override suspend fun start() = Unit
