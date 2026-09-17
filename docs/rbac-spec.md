@@ -41,7 +41,8 @@
 | 项目 | 状态 |
 |------|------|
 | RBAC 数据模型字段（User/Role/Menu/关系表） | 冻结 |
-| `@Permission` 字符串格式语义（脚手架约定） | 冻结 |
+| `@Permission` 字符串格式语义（三段式 + 连字符） | 冻结 |
+| action 词汇表（读一律 `query`，写 create/update/delete） | 冻结（2026-09） |
 | 通配规则（`*:*:*` / `module:*:*` / `module:res:*`） | 冻结 |
 | 菜单 `type` 取值与语义（1/2/3） | 冻结 |
 | `PermissionInfo` 计算流程 | 冻结 |
@@ -118,42 +119,105 @@
 <module>:<resource>:<action>
 ```
 
-**强制三段式**，冒号分隔，全小写，下划线连接复合词。
+**强制三段式**，冒号分隔，全小写，**复合词用连字符 `-`**。
 
 | 段 | 含义 | 示例 |
 |----|------|------|
-| `module` | 业务模块 | `system` / `member` / `payment` / `platform` |
-| `resource` | 资源/聚合根 | `user` / `role` / `order` / `wallet_recharge` |
-| `action` | 操作类型 | `list` / `page` / `query` / `create` / `update` / `delete` / `export` / `import` |
+| `module` | 业务模块 | `system` / `infra` / `member` / `pay` / `platform` / `gateway` |
+| `resource` | 资源/聚合根，**必须与该资源的路由段逐字一致** | `user` / `mail-account` / `wallet-recharge-package` |
+| `action` | 操作类型，取自 §3.4 的冻结词汇表 | `query` / `create` / `update` / `delete` |
+
+> **分隔符为什么是连字符**：2026-09 全量核对时，代码里 26 个多词资源段**全部**用连字符
+> （`api-access-log`、`mail-account`、`wallet-recharge-package`…），且与路由段完全一致
+> （`/system/mail-account`、`/platform/charge-record`）；用下划线的只有一个孤例，已改正。
+> 规范此前写的是下划线，但没有一处代码遵守 —— 一条零遵守率的冻结规则不是标准。
+> 现按「资源段 = 路由段」对齐：开发者在控制器上看到 `@Controller("/system/mail-account")`，
+> 就知道权限串一定是 `system:mail-account:*`，不需要再记第二套拼写。
+
+**resource 段与路由段不一致是 bug**，CI 应当拦下来。真实案例：`ChargeRecordController` 的路由是
+`/platform/charge-record`，权限串却写成 `platform:charge:*`，导致菜单里种的 `platform:charge-record:query`
+永远匹配不上后端 —— 授了权也是 403。
 
 ### 3.2 示例
 
 ```
-system:user:page
+system:user:query            # 列表、下拉、详情——所有读都是它
 system:user:create
 system:user:update
 system:user:delete
-system:user:assign_role
-member:user:export
-payment:wallet:recharge
-platform:client:reset_secret
+system:user:update-password  # 业务动作，复合词用连字符
+pay:wallet-recharge-package:query
+platform:charge-record:delete
+gateway:group-override:query
 ```
 
 ### 3.3 禁止形式
 
 ```
-❌ user:list                 缺 module 段
-❌ system.user.list          错误分隔符
-❌ System:User:List          大写
-❌ system:user:list,update   多 action 合并
-❌ system::list              空段
-❌ system:user               缺 action 段（即使 action 是"读全部"也必须显式写 page/list/query）
+❌ user:query                  缺 module 段
+❌ system.user.query           错误分隔符
+❌ System:User:Query           大写
+❌ system:user:query,update    多 action 合并
+❌ system::query               空段
+❌ system:user                 缺 action 段（读也必须显式写 query）
+❌ system:user:page            page / list / detail / overview 一律并入 query（§3.4）
+❌ system:mail_account:query   复合词用连字符，不用下划线
+❌ pay:wallet-freeze:menu      menu 不是动作（真实出现过，见 §3.4 注）
+❌ platform:charge:query       resource 段与路由 /platform/charge-record 不一致
 ```
 
-### 3.4 推荐 action 词汇表（约定，非强制）
+### 3.4 action 词汇表（**冻结**）
 
 | Action | 用途 |
 |--------|------|
+| `query` | **一切读**：分页列表、不分页列表、下拉数据、单条详情、统计概览 |
+| `create` | 创建 |
+| `update` | 更新（含状态变更、排序等一切改动） |
+| `delete` | 删除 |
+| `export` / `import` | 导出 / 导入（有实际接口时才用） |
+| `<verb>` | 业务专属动作，复合词用连字符，如 `update-password` / `mark-paid` / `assign` |
+
+**读不分形状。** 这是本表最重要的一条：同一资源的分页、下拉、详情共用一个 `query`。
+脚手架的主流模块一直如此 —— `system:user:query` 同时挂在 `/page`、`/simple-list`、`/get/{id}`、
+`/get/{id}/with-roles` 四个接口上。
+
+为什么不保留 `page` / `list` 的区分：
+- **运营看不懂。** 角色授权页面上并排出现 `pay:order:page` 与 `pay:wallet:overview`，
+  没有人能判断它们是不是同一类权限。
+- **拆了也没人用对。** 菜单授的是「页面」，而一个列表页本来就要同时调列表接口和详情接口。
+  把它们拆成两个权限的实际后果是「列表能看、点进去 403」，没有任何场景需要这种粒度。
+- **它不是数据级权限。** 真要控制「只能看自己的单」，那是行级权限，本文 §1.3 明确不覆盖，
+  再多的 action 词也解决不了。
+
+2026-09 的全量统一把 27 个 `page` / `list` / `detail` / `overview` 并入了 `query`，
+涉及 payment（12）、platform（7）、gateway（8）。合并是**放宽**：原先只授了列表权限的角色
+现在也能看详情 —— 可以接受，理由见上。
+
+> **注**：`pay:wallet-freeze:menu` 曾经真实存在 —— 「这一行是个菜单」被写进了 action 段。
+> action 段只能是动作，不能是这一行在 UI 里的角色。
+
+### 3.5 一致性约束（CI 应当检查）
+
+除了格式，还有两条**存在性**约束。§9.4 已指出格式检查管不到它们，这里给出判定方法：
+
+1. **菜单里的 permission 必须在后端存在。** 否则运营勾了也没用 —— 权限集里多一个串，
+   没有任何接口认它。全量核对方法：
+   ```
+   后端：grep -rhoE '@Permission\("[^"]+"\)' <各模块>/src | sed 's/@Permission("//;s/")//' | sort -u
+   菜单：SELECT DISTINCT permission FROM system_menus WHERE permission <> '' AND status = 1
+   comm -13 后端 菜单   # 输出即死授权，必须为空
+   ```
+   2026-09 首次跑这条检查时查出 8 条，包括四个指向根本不存在的 `/infra/config` 控制器的按钮。
+
+2. **菜单指向的页面，后端必须真有接口。** 判断依据是后端有没有对应路由与 `@Permission`，
+   **不是前端有没有 `.tsx`**。前端模块里躺着一个页面文件，不代表它调得通 ——
+   `pay/notify/index` 与 `pay/app/index` 两页就是这样：前端页面齐全，
+   而 module-payment 根本没有 `/pay/notify`、`/pay/app` 控制器，实测 404。
+
+反方向（后端有 `@Permission`、菜单里没有）不是 bug 但是缺口：那个能力只有 super_admin 用得上，
+任何角色都授不了。新增受权限保护的接口时，同一个 PR 里补上菜单种子。
+
+--------|------|
 | `list` | 不分页列表（少量、字典级） |
 | `page` | 分页列表 |
 | `query` | 单条查询 / 详情 |
