@@ -31,6 +31,7 @@ public class CoreAuthenticatorBridge(
     private val headerName: String = "Authorization",
     private val tokenPrefix: String = "Bearer ",
     private val sessionCookieName: String = "neton_session",
+    private val validateAdminToken: (suspend (String) -> Boolean)? = null,
 ) : CoreAuthenticator {
 
     override val name: String = delegate.name
@@ -48,6 +49,11 @@ public class CoreAuthenticatorBridge(
             override fun getRemoteAddress(): String? = null
         }
         return try {
+            if (context.routeGroup == "admin" && validateAdminToken != null) {
+                val raw = sec.headers.entries.firstOrNull { it.key.equals(headerName, true) }?.value
+                    ?: return null
+                if (!raw.startsWith(tokenPrefix) || !validateAdminToken.invoke(raw.removePrefix(tokenPrefix))) return null
+            }
             delegate.authenticate(sec)
         } catch (_: AuthenticationException) {
             null

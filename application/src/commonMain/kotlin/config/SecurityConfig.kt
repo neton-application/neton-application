@@ -69,6 +69,15 @@ class SecurityConfig : NetonConfigurer<SecurityBuilder> {
                 headerName = jwtConfig.headerName,
                 tokenPrefix = jwtConfig.tokenPrefix,
                 sessionCookieName = config.SessionCookie.name(ctx),
+                validateAdminToken = { token ->
+                    val verified = legacy.verifyToken(token)
+                    val id = verified.identity.userId.value.toLong()
+                    val user = table.UserTable.get(id)
+                    verified.claimString("type") == "access" && user?.status == 1 &&
+                        ctx.get(logic.MfaLogic::class).accepts(id,
+                            verified.claimString("mfa_revision")?.toLongOrNull(),
+                            verified.claimString("mfa_verified") == "true")
+                },
             ),
         )
 

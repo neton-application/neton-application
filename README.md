@@ -513,6 +513,7 @@ KSP auto-generates `ExampleTableImpl`, `ExampleMeta`, `ExampleRowMapper`, and 3 
 | Document | Description |
 |----------|-------------|
 | **SPEC.md** | Project architecture, API specifications, configuration specs |
+| [Authentication abuse protection](./docs/auth-abuse-protection-spec.md) | Trusted proxy chain, login throttling, SMS quotas, CAPTCHA and MFA rollout specification |
 
 ## License
 
