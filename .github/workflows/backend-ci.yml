@@ -24,6 +24,12 @@ jobs:
           repository: netonframework/neton
           path: neton
 
+      - name: Checkout account module
+        uses: actions/checkout@v4
+        with:
+          repository: neton-application/neton-application-module-account
+          path: neton-application-module-account
+
       - name: Checkout member module
         uses: actions/checkout@v4
         with:
@@ -57,6 +63,7 @@ jobs:
       - name: Generate KSP outputs for composite modules
         working-directory: neton-application
         run: |
+          rm -rf ../neton-application-module-account/build/generated ../neton-application-module-account/build/classes ../neton-application-module-account/build/kotlin
           rm -rf ../neton-application-module-member/build/generated ../neton-application-module-member/build/classes ../neton-application-module-member/build/kotlin
           rm -rf ../neton-application-module-payment/build/generated ../neton-application-module-payment/build/classes ../neton-application-module-payment/build/kotlin
           rm -rf ../neton-application-module-platform/build/generated ../neton-application-module-platform/build/classes ../neton-application-module-platform/build/kotlin
@@ -64,6 +71,7 @@ jobs:
           rm -rf module-infra/build/generated module-infra/build/classes module-infra/build/kotlin
           ./gradlew :module-system:kspKotlinMacosArm64 --rerun-tasks
           ./gradlew :module-infra:kspKotlinMacosArm64 --rerun-tasks
+          (cd ../neton-application-module-account && ./gradlew kspKotlinMacosArm64 --rerun-tasks)
           (cd ../neton-application-module-member && ./gradlew kspKotlinMacosArm64 --rerun-tasks)
           (cd ../neton-application-module-payment && ./gradlew kspKotlinMacosArm64 --rerun-tasks)
           (cd ../neton-application-module-platform && ./gradlew kspKotlinMacosArm64 --rerun-tasks)

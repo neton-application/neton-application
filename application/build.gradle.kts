@@ -38,6 +38,7 @@ kotlin {
                 // 通用 base distribution 默认模块。R5-B: game/assistant(产品模块)
                 // 与 com.netonstream.privchat:main(可选 IM 模块)移出 base,由
                 // privchat-application 产品发行版 fork 加回。
+                implementation(project(":module-account"))
                 implementation(project(":module-member"))
                 implementation(project(":module-payment"))
                 implementation(project(":module-platform"))
@@ -77,7 +78,7 @@ dependencies {
 // 子命令 / startup precheck / serve modules(...) 三处共用，不再手写模块列表。
 // 顺序 = 声明顺序（Neton.run 内部仍按 dependsOn 拓扑排序兜底）。
 ksp {
-    arg("neton.modules", "system,infra,member,payment,platform,cs")
+    arg("neton.modules", "system,infra,account,member,payment,platform,cs")
 }
 
 // Ensure Kotlin compilation sees KSP-generated commonMain sources.
