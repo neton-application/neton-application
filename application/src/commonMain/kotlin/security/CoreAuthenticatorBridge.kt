@@ -52,7 +52,9 @@ public class CoreAuthenticatorBridge(
             if (context.routeGroup == "admin" && validateAdminToken != null) {
                 val raw = sec.headers.entries.firstOrNull { it.key.equals(headerName, true) }?.value
                     ?: return null
-                if (!raw.startsWith(tokenPrefix) || !validateAdminToken.invoke(raw.removePrefix(tokenPrefix))) return null
+                // 与框架 JwtAuthenticator 一致：去前缀后再 trim。配置里的 "Bearer " 读出来是 "Bearer"
+                //（尾空格不保留），不 trim 时 token 以空格开头，验签失败 —— 所有管理员请求都会变成 401。
+                if (!raw.startsWith(tokenPrefix) || !validateAdminToken.invoke(raw.removePrefix(tokenPrefix).trim())) return null
             }
             delegate.authenticate(sec)
         } catch (_: AuthenticationException) {
