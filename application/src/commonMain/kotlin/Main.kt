@@ -16,7 +16,6 @@ import neton.redis.redis
 import neton.routing.routing
 import neton.security.security
 import neton.storage.storage
-import security.WildcardPermissionEvaluator
 
 // MANIFEST-P2: 模块列表唯一来源是 application/build.gradle.kts 的
 // `ksp { arg("neton.modules", "...") }`。KSP 生成 GeneratedApplicationModules,
@@ -90,12 +89,8 @@ fun main(args: Array<String>) {
         // 详见架构边界：neton-docs/docs/spec/migration.md
         database { }
 
-        security {
-            // 注入应用脚手架的通配权限评估器（rbac-spec §4.2）。
-            // 框架默认 PermissionEvaluator 是精确匹配，不支持 *:*:* 等通配；
-            // 必须由脚手架显式覆盖。
-            setPermissionEvaluator(WildcardPermissionEvaluator())
-        }
+        // SecurityConfig owns authenticator and permission evaluator registration.
+        security { }
 
         // Redis 装载（SMS code 暂存、限流、token 黑名单等都需要）。
         // 配置文件 config/redis.conf；缺省 host=127.0.0.1 port=6379。

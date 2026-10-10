@@ -23,6 +23,11 @@ kotlin {
     }
 
     sourceSets {
+        commonTest {
+            dependencies {
+                implementation(kotlin("test"))
+            }
+        }
         commonMain {
             dependencies {
                 // 核心模块

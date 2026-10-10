@@ -8,6 +8,7 @@ import neton.security.jwt.DispatchingJwtAuthenticator
 import neton.security.jwt.JwtAuthenticator
 import neton.security.jwt.UnifiedTokenAuthenticator
 import security.CoreAuthenticatorBridge
+import security.WildcardPermissionEvaluator
 
 /**
  * 通用 application HTTP 鉴权骨架（spec TOKEN_UNIFICATION_SPEC v1.3）。
@@ -72,9 +73,7 @@ class SecurityConfig : NetonConfigurer<SecurityBuilder> {
         )
 
         target.bindDefaultGuard()
-        // super_admin 角色拥有所有权限
-        target.setPermissionEvaluator { identity, permission, _ ->
-            identity.hasRole("super_admin") || identity.hasPermission(permission)
-        }
+        // Role-to-permission resolution belongs to module-system, including custom super-admin codes.
+        target.setPermissionEvaluator(WildcardPermissionEvaluator())
     }
 }
