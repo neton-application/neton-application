@@ -161,6 +161,10 @@ expect "账号登录：未注册号码与密码错误提示一致" "$m1" "$m2"
 for i in 1 2 3 4; do envelope POST /app/auth/login "" "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\"}" >/dev/null; done
 r=$(envelope POST /app/auth/login "" "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\"}")
 echo "$r" | grep -q "Too many failed attempts" && pass "连续失败 5 次后锁定" || fail "未锁定: $r"
+RA=$(curl -s -D - -o /dev/null -X POST "$U/app/auth/login" -H "$CT" -d "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\"}" | tr -d '\r' | awk -F': ' 'tolower($1)=="retry-after"{print $2}')
+[ -n "$RA" ] && [ "$RA" -gt 0 ] && pass "冷却响应带 Retry-After（$RA 秒）" || fail "冷却响应缺 Retry-After"
+LOCK_KEYS=$(rc --scan --pattern '*auth:fail:account:*' | tr '\n' ' ')
+[ -n "$LOCK_KEYS" ] && ! echo "$LOCK_KEYS" | grep -q "13900099002" && pass "冷却键不含原始账号（摘要 + IP）" || fail "冷却键异常: $LOCK_KEYS"
 
 echo "[8] 全端退出与登录审计"
 D1=$(account_login "$MOBILE" | json "['data']['accessToken']")
