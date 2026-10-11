@@ -1,0 +1,18 @@
+# 干净环境构建本发行版所需的兄弟仓库（评审 R11/R20）。
+# 格式：<GitHub 仓库> <相对于工作区根目录的路径>
+# 路径必须与本地开发布局一致：settings.gradle.kts 与框架的 includeBuild 都按这个布局写相对路径。
+# 由 update-dependency-lock.sh 根据本机兄弟仓库的远端分支头生成 dependencies.lock（追加提交号）。
+netonframework/neton                              Neton/neton
+netonframework/io                                 Neton/io
+netonframework/http                               Neton/http
+netonframework/tls                                Neton/tls
+netonframework/websocket                          Neton/websocket
+netonframework/geolite4k                          Neton/geolite4k
+neton-application/neton-application-module-system    Neton/neton-application-module-system
+neton-application/neton-application-module-infra     Neton/neton-application-module-infra
+neton-application/neton-application-module-account   Neton/neton-application-module-account
+neton-application/neton-application-module-member    Neton/neton-application-module-member
+neton-application/neton-application-module-payment   Neton/neton-application-module-payment
+neton-application/neton-application-module-platform  Neton/neton-application-module-platform
+neton-application/neton-application-module-cs        Neton/neton-application-module-cs
+privchat/privchat-service-client                  privchat/privchat-service-client

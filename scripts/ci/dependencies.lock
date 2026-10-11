@@ -1,0 +1,15 @@
+# 由 scripts/ci/update-dependency-lock.sh 生成，勿手改。格式：<仓库> <路径> <提交号>
+netonframework/neton                                 Neton/neton                                          a7e4d9179e77efc9bcb96d6639d8d21e8c7a2251
+netonframework/io                                    Neton/io                                             84a9488e478d754db6891e2208b595058f006499
+netonframework/http                                  Neton/http                                           3452c87f1303fde2ac327ce4621ffd6ac64d09f1
+netonframework/tls                                   Neton/tls                                            1e1748c4585a6af0f89c81456828e94e3195b23e
+netonframework/websocket                             Neton/websocket                                      775b2ccc8ca0889bc317a3ebb67f2c327edf036e
+netonframework/geolite4k                             Neton/geolite4k                                      6812d975fa57274cb1d874e14d6206dc37e0b9f2
+neton-application/neton-application-module-system    Neton/neton-application-module-system                d9f80cae5ebbe7ac38ee8722993de1160099f44f
+neton-application/neton-application-module-infra     Neton/neton-application-module-infra                 c2b898cd14276a89c25bd7f0a86c02eb8000882b
+neton-application/neton-application-module-account   Neton/neton-application-module-account               3c9980e55149cd596efbfba109de8ea4b85c3ea4
+neton-application/neton-application-module-member    Neton/neton-application-module-member                6da7a9f4efcc00bb2d2762e9cde9587c484d9cc6
+neton-application/neton-application-module-payment   Neton/neton-application-module-payment               2191b34d13f0c94bd39671a11337bf1b45ba8eab
+neton-application/neton-application-module-platform  Neton/neton-application-module-platform              21f4ed9859b011827656365456cc12ed1a67f2e7
+neton-application/neton-application-module-cs        Neton/neton-application-module-cs                    d225487e3f206b4ee1802c2dae2ea07ba3fad210
+privchat/privchat-service-client                     privchat/privchat-service-client                     6c80338b2a5b94be90bcaf4ff8591bfbced92946

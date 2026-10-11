@@ -1,5 +1,11 @@
 name: Backend CI
 
+# 干净环境构建门禁（评审 R11/R20）：
+# - 工作区布局与本地开发一致（projects/Neton/*、projects/privchat/*），兄弟仓库按
+#   scripts/ci/dependencies.lock 精确到提交号检出，不依赖「当时的 main」。
+# - 编译 + 模块单测 + 链接；真实 PostgreSQL/Redis 上跑身份域与会话的负向 E2E；
+#   生产目标 Linux 的 release 构建单独一个 job，不能只用 macOS 编译代替发布验收。
+
 on:
   pull_request:
   push:
@@ -7,46 +13,21 @@ on:
       - main
       - master
 
-jobs:
-  application-build:
-    runs-on: macos-14
-    timeout-minutes: 60
+env:
+  NETON_CI_TOKEN: ${{ secrets.NETON_CI_TOKEN }}
 
+jobs:
+  build-and-test:
+    runs-on: macos-14
+    timeout-minutes: 90
     steps:
       - name: Checkout application
         uses: actions/checkout@v4
         with:
-          path: neton-application
+          path: Neton/neton-application
 
-      - name: Checkout framework
-        uses: actions/checkout@v4
-        with:
-          repository: netonframework/neton
-          path: neton
-
-      - name: Checkout account module
-        uses: actions/checkout@v4
-        with:
-          repository: neton-application/neton-application-module-account
-          path: neton-application-module-account
-
-      - name: Checkout member module
-        uses: actions/checkout@v4
-        with:
-          repository: neton-application/neton-application-module-member
-          path: neton-application-module-member
-
-      - name: Checkout payment module
-        uses: actions/checkout@v4
-        with:
-          repository: neton-application/neton-application-module-payment
-          path: neton-application-module-payment
-
-      - name: Checkout platform module
-        uses: actions/checkout@v4
-        with:
-          repository: neton-application/neton-application-module-platform
-          path: neton-application-module-platform
+      - name: Checkout locked dependencies
+        run: Neton/neton-application/scripts/ci/checkout-dependencies.sh "$GITHUB_WORKSPACE"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -58,51 +39,95 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v3
         with:
-          build-root-directory: neton-application
+          build-root-directory: Neton/neton-application
 
-      - name: Generate KSP outputs for composite modules
-        working-directory: neton-application
+      - name: Module unit tests
+        working-directory: Neton/neton-application
+        run: ./gradlew :module-system:macosArm64Test :module-account:macosArm64Test :module-member:macosArm64Test
+
+      - name: Link application
+        working-directory: Neton/neton-application
+        run: ./gradlew :application:linkDebugExecutableMacosArm64
+
+      - name: Upload binary for E2E
+        uses: actions/upload-artifact@v4
+        with:
+          name: application-macos-debug
+          path: Neton/neton-application/application/build/bin/macosArm64/debugExecutable/application.kexe
+          retention-days: 1
+
+  # 身份域隔离与会话吊销的负向 E2E：真实 PostgreSQL + Redis + 真实二进制（spec application/identity-realm §7）。
+  security-e2e:
+    needs: build-and-test
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - name: Checkout application
+        uses: actions/checkout@v4
+        with:
+          path: Neton/neton-application
+
+      - name: Download binary
+        uses: actions/download-artifact@v4
+        with:
+          name: application-macos-debug
+          path: bin
+
+      - name: Start PostgreSQL and Redis
         run: |
-          rm -rf ../neton-application-module-account/build/generated ../neton-application-module-account/build/classes ../neton-application-module-account/build/kotlin
-          rm -rf ../neton-application-module-member/build/generated ../neton-application-module-member/build/classes ../neton-application-module-member/build/kotlin
-          rm -rf ../neton-application-module-payment/build/generated ../neton-application-module-payment/build/classes ../neton-application-module-payment/build/kotlin
-          rm -rf ../neton-application-module-platform/build/generated ../neton-application-module-platform/build/classes ../neton-application-module-platform/build/kotlin
-          rm -rf module-system/build/generated module-system/build/classes module-system/build/kotlin
-          rm -rf module-infra/build/generated module-infra/build/classes module-infra/build/kotlin
-          ./gradlew :module-system:kspKotlinMacosArm64 --rerun-tasks
-          ./gradlew :module-infra:kspKotlinMacosArm64 --rerun-tasks
-          (cd ../neton-application-module-account && ./gradlew kspKotlinMacosArm64 --rerun-tasks)
-          (cd ../neton-application-module-member && ./gradlew kspKotlinMacosArm64 --rerun-tasks)
-          (cd ../neton-application-module-payment && ./gradlew kspKotlinMacosArm64 --rerun-tasks)
-          (cd ../neton-application-module-platform && ./gradlew kspKotlinMacosArm64 --rerun-tasks)
+          brew install postgresql@16 redis
+          brew services start postgresql@16
+          brew services start redis
+          for i in $(seq 1 30); do
+            /opt/homebrew/opt/postgresql@16/bin/pg_isready -h localhost && redis-cli ping && break
+            sleep 1
+          done
 
-      - name: Compile application
-        working-directory: neton-application
-        run: ./gradlew :application:compileKotlinMacosArm64
+      - name: Run realm and session E2E
+        env:
+          APP_BIN: ${{ github.workspace }}/bin/application.kexe
+          PATH_PG: /opt/homebrew/opt/postgresql@16/bin
+        run: |
+          chmod +x "$APP_BIN"
+          export PATH="$PATH_PG:$PATH"
+          Neton/neton-application/tests/security/realm-session-e2e.sh
+
+  linux-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout application
+        uses: actions/checkout@v4
+        with:
+          path: Neton/neton-application
+
+      - name: Checkout locked dependencies
+        run: Neton/neton-application/scripts/ci/checkout-dependencies.sh "$GITHUB_WORKSPACE"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      - name: Link Linux release binary
+        working-directory: Neton/neton-application
+        run: ./gradlew :application:linkReleaseExecutableLinuxX64
 
   # Outbox store contract against a real PostgreSQL. Runs the dedicated
   # postgresContractTest task; the regular unit test task does not touch a database.
   outbox-postgres-contract:
     runs-on: macos-14
     timeout-minutes: 45
-
     steps:
       - name: Checkout application
         uses: actions/checkout@v4
         with:
-          path: neton-application
+          path: Neton/neton-application
 
-      - name: Checkout framework
-        uses: actions/checkout@v4
-        with:
-          repository: netonframework/neton
-          path: neton
-
-      - name: Checkout infra module
-        uses: actions/checkout@v4
-        with:
-          repository: neton-application/neton-application-module-infra
-          path: neton-application-module-infra
+      - name: Checkout locked dependencies
+        run: Neton/neton-application/scripts/ci/checkout-dependencies.sh "$GITHUB_WORKSPACE"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -125,15 +150,8 @@ jobs:
           /opt/homebrew/opt/postgresql@16/bin/psql -d postgres -c \
             "CREATE DATABASE evtest_admin OWNER evtest;"
 
-      - name: Generate KSP outputs for infra
-        working-directory: neton-application
-        run: |
-          rm -rf module-system/build/generated module-infra/build/generated
-          ./gradlew :module-system:kspKotlinMacosArm64 --rerun-tasks
-          ./gradlew :module-infra:kspKotlinMacosArm64 --rerun-tasks
-
       - name: Run outbox PostgreSQL contract tests
-        working-directory: neton-application
+        working-directory: Neton/neton-application
         env:
           EVENT_DB_URI: postgresql://evtest:evtest@localhost:5432/evtest_admin
         run: ./gradlew :module-infra:postgresContractTest
@@ -145,4 +163,3 @@ jobs:
             "SELECT count(*) FROM pg_database WHERE datname LIKE 'evtest_%' AND datname <> 'evtest_admin';")
           echo "leftover temp databases: $left"
           test "$left" = "0"
-
