@@ -1,460 +1,308 @@
 # Neton Application
 
-An enterprise-grade admin system built on the [Neton](../neton) framework, compiled to native binaries via Kotlin/Native — fast startup, low memory footprint, single-file deployment.
+A general-purpose admin backend built on the [Neton](../neton) framework and compiled to a native binary with Kotlin/Native — fast startup, small memory footprint, single-file deployment, no JVM at runtime.
 
-> Engineering rules: see [ENGINEERING_RULES.md](./ENGINEERING_RULES.md)
+This repository is the **base distribution**: it only assembles modules (application entry, configuration, CI). All business code lives in independent module repositories.
+
+> Specifications (source of truth) live in `neton-docs`:
+> [SPEC.md](../neton-docs/docs/zh-hans/spec/application/SPEC.md) ·
+> [Identity realms & sessions](../neton-docs/docs/zh-hans/spec/application/identity-realm.md) ·
+> [Auth abuse protection](../neton-docs/docs/zh-hans/spec/application/auth-abuse-protection-spec.md)
 >
-> Module template spec: see [docs/module-template-spec.md](./docs/module-template-spec.md)
+> Engineering rules: [docs/ENGINEERING_RULES.md](./docs/ENGINEERING_RULES.md) ·
+> Module template: [docs/module-template-spec.md](./docs/module-template-spec.md)
 
 ## Tech Stack
 
 | Component | Choice |
 |-----------|--------|
-| Language | Kotlin 2.3 (Multiplatform) |
+| Language | Kotlin 2.4.20 (Multiplatform) |
 | Framework | Neton 1.0.0-beta1 |
-| Compilation | Kotlin/Native → Native Binary |
-| Database | MySQL / PostgreSQL / SQLite |
-| Authentication | JWT |
+| Compilation | Kotlin/Native → native binary (`application.kexe`) |
+| Database | **PostgreSQL only** |
+| Cache / rate limiting / verification codes | Redis |
+| Authentication | Realm-isolated JWT (HS256) + server-side sessions |
 | Build | Gradle 8.14 + KSP |
-| Logging | Structured JSON, async writes |
+| Logging | Structured JSON, multiple sinks |
 
-**Runtime Metrics:**
+Runtime: cold start ~150 ms (debug) / ~3 ms (release), ~20 MB memory.
 
-- Cold start ~150ms (debug) / ~3ms (release)
-- Memory usage ~20MB
-- Single-file deployment, no JVM dependency
+## Repositories
 
-## Repository Structure
+Multi-repo + Gradle Composite Build. One repository per module; this distribution only assembles them.
 
-Uses a **multi-repo + Gradle Composite Build** architecture with the main repository and extension modules separated:
+| Repository | Contents |
+|------------|----------|
+| `neton` | Framework (core, http, database, security, …) |
+| `neton-application` | This repo: application entry, config, CI. No business module code |
+| `neton-application-module-system` | Admin identity, authentication & sessions, RBAC, MFA, verification codes, audit, settings, health probes |
+| `neton-application-module-infra` | Files, scheduled jobs, API logs, Redis monitoring, domain events |
+| `neton-application-module-account` | End-user accounts: registration/login, profile, mobile/email/password, account sessions |
+| `neton-application-module-member` | Member growth: levels, points, check-in, invites, addresses, groups/tags (depends on account) |
+| `neton-application-module-payment` | Payment: channels, orders, refunds, wallets, transfers, withdrawals, bank cards |
+| `neton-application-module-platform` | Open platform: clients, API catalog, billing, call logs and statistics |
+| `neton-application-module-cs` | Customer service (talks to PrivChat via `privchat-service-client`) |
+| `neton-application-front` (+ `neton-application-front-*`) | Admin frontend (React 19 + Next.js) |
+| `neton-application-client` (+ `neton-application-client-*`) | End-user console (React 19 + Next.js) |
 
-| Repository | Contents | Inclusion Method |
-|------------|----------|-----------------|
-| `neton` | Framework | `includeBuild("../neton")` |
-| `neton-application` | Main app (module-system + module-infra + application entry) | Root project |
-| `neton-application-module-member` | Member module | `includeBuild` |
-| `neton-application-module-payment` | Payment module | `includeBuild` |
-| `neton-application-module-platform` | Open platform module | `includeBuild` |
-| `neton-application-admin` | Admin frontend (Vue3 + Ant Design Vue) | Standalone repo |
-
-Directory layout:
+Workspace layout (paths in `settings.gradle.kts` are relative to it):
 
 ```
 projects/
-├── neton/                              # Framework
-├── neton-application/                  # Main repo (this project)
-│   ├── application/                    # Application entry
-│   │   ├── src/commonMain/kotlin/
-│   │   │   ├── Main.kt                # Startup entry
-│   │   │   ├── config/                # SecurityConfig, etc.
-│   │   │   └── controller/            # HomeController (health check)
-│   │   └── config/                    # TOML config files
-│   │       ├── application.conf       # Server & logging config
-│   │       ├── database.conf          # Database connection
-│   │       └── routing.conf           # Route group definitions
-│   ├── module-system/                  # System management (core)
-│   ├── module-infra/                   # Infrastructure
-│   ├── sql/                            # Main DB migration scripts
-│   │   ├── mysql/
-│   │   ├── postgresql/
-│   │   └── sqlite/
-│   ├── build.gradle.kts
-│   ├── settings.gradle.kts
-│   └── gradle.properties
-├── neton-application-module-member/    # Member module (standalone repo)
-├── neton-application-module-payment/   # Payment module (standalone repo)
-├── neton-application-module-platform/  # Open platform module (standalone repo)
-└── neton-application-admin/            # Admin frontend
+├── Neton/
+│   ├── neton/                               # Framework
+│   ├── geolite4k/
+│   ├── neton-application/                   # This repo
+│   ├── neton-application-module-system/
+│   ├── neton-application-module-infra/
+│   ├── neton-application-module-account/
+│   ├── neton-application-module-member/
+│   ├── neton-application-module-payment/
+│   ├── neton-application-module-platform/
+│   ├── neton-application-module-cs/
+│   ├── neton-application-front/
+│   └── neton-application-client/
+└── privchat/
+    └── privchat-service-client/             # Used by module-cs
+```
+
+The exact repositories and pinned commits for a clean checkout are listed in `scripts/ci/dependencies.lock`; `scripts/ci/checkout-dependencies.sh <workspace-root>` checks them out (CI uses this).
+
+This repo:
+
+```
+neton-application/
+├── application/
+│   ├── src/commonMain/kotlin/Main.kt   # Entry point (assembles modules and infrastructure)
+│   └── config/                         # Runtime config (TOML)
+├── scripts/ci/                         # Dependency lock & checkout scripts
+├── tests/security/                     # Identity realm & session E2E
+├── build.gradle.kts / settings.gradle.kts
 ```
 
 ## Architecture
 
-### Layered Architecture
+### Layers
 
 ```
-Controller  ──  HTTP routing, parameter binding, permission annotations
+Controller  ──  HTTP routing, parameter binding, @Permission
      │
-   Logic    ──  Business logic, state machines, transaction orchestration
+   Logic    ──  Business logic, transaction orchestration
      │
-   Table    ──  Data access (KSP auto-generated CRUD)
+   Table    ──  Data access (KSP-generated CRUD)
      │
-   DB       ──  MySQL / PostgreSQL / SQLite
+   DB       ──  PostgreSQL
 ```
 
 ### Route Groups
 
-| Group | Mount Path | Purpose | requireAuth |
-|-------|-----------|---------|-------------|
-| `admin` | `/admin` | Admin panel API | true |
-| `app` | `/app` | Consumer / mobile API | true |
-| `open` | `/platform` | Open platform API | As needed |
+Defined in `application/config/routing.conf`:
+
+| Group | Mount | Purpose | requireAuth | Accepted tokens |
+|-------|-------|---------|-------------|-----------------|
+| `admin` | `/admin` | Admin API | true | Admin realm only |
+| `app` | `/app` | End-user / mobile API | true | Account realm only |
+| `manage` | `/manage` | Operator management center | true | Account realm only |
+| `open` | `/platform` | Open platform API | as needed | No application tokens (uses its own authenticator) |
 
 ### Module Dependencies
 
 ```
 application
-├── module-system        ← Core, depended upon by all modules
-├── module-infra         ← Depends on system
-├── module-member        ← Depends on system (standalone repo)
-├── module-payment       ← Depends on system (standalone repo)
-└── module-platform      ← Depends on system (standalone repo)
+├── module-system        ← Core
+├── module-infra         ← system
+├── module-account       ← system, infra
+├── module-member        ← account
+├── module-payment       ← system, account
+├── module-platform      ← system
+└── module-cs            ← account, payment
 ```
 
-## Feature Modules
+The module list has a single source: `ksp { arg("neton.modules", ...) }` in `application/build.gradle.kts`. It drives the `migrate` command, the startup precheck and the server.
 
-### module-system — System Management
+## Security
 
-RBAC permission system, authentication, organizational structure.
+### JWT secret
 
-| Feature | Description |
-|---------|-------------|
-| Authentication | Username/password login, SMS login, social login (Google / Telegram), token refresh |
-| User Management | CRUD, enable/disable, password reset, user profile |
-| Role Management | CRUD, role assignment, menu permission assignment |
-| Menu Management | Tree-structured CRUD |
-| Permission Management | Fine-grained permission query and assignment |
-| Department Management | Tree-structured org hierarchy CRUD |
-| Post Management | Post CRUD and listing |
-| Dictionary Management | Dictionary type + dictionary data CRUD |
-| Logging | Login logs, operation audit logs |
-| Notices | System announcement CRUD |
-| Messaging | Message channels, message templates, send records, SMS/email/notification templates |
-| Social Users | Third-party social account binding management |
+The signing key is supplied **only** via the environment variable `NETON_SECURITY__JWT__SECRETKEY`. It must be at least 32 characters. If it is missing, still the placeholder (`REPLACE_ME…`) or too short, the application refuses to start — in every environment, including `dev`.
 
-### module-infra — Infrastructure
+```bash
+export NETON_SECURITY__JWT__SECRETKEY="$(openssl rand -base64 48)"
+```
 
-| Feature | Description |
-|---------|-------------|
-| Dynamic Config | Key-value configuration management |
-| File Management | File upload, S3 pre-signed URLs, multi-storage backends |
-| Storage Config | Storage backend CRUD, connectivity testing, default storage switching |
-| Scheduled Jobs | Job CRUD, execution logs, cron scheduling |
-| API Logs | Access logs + error logs, request/response tracing |
-| Redis Monitoring | Redis health check and statistics |
+### Identity realms and sessions
 
-### module-member — Membership System
+- Admin tokens and account tokens are separate realms. The `admin` group accepts only admin tokens; `app` and `manage` accept only account tokens. A token from the wrong realm gets 401.
+- Refresh tokens cannot be used as access tokens. Refresh tokens are single-use (admin and the built-in account realm); reuse beyond a 30-second concurrency window revokes the whole session.
+- `POST …/auth/logout` revokes only the current session. `POST /admin/system/auth/logout-all` and `POST /app/auth/logout-all` revoke all sessions of that user.
+- Password change and permission revocation take effect immediately, without waiting for token expiry.
+- The admin frontend uses an HttpOnly session cookie; cookie-authenticated write requests must send `X-Neton-Csrf: 1`.
+- **After upgrading to this version, all previously issued tokens are rejected** (they carry no `realm` claim). Users must log in again.
 
-| Feature | Description |
-|---------|-------------|
-| Member Auth | Consumer registration/login/logout, SMS verification, social registration |
-| Member Management | Member CRUD, groups, tags |
-| Level System | Level definition, experience points, auto-upgrade |
-| Points System | Points issuance, points history, redemption |
-| Check-in System | Daily check-in rewards, check-in records, streak tracking |
-| Shipping Addresses | Address CRUD |
+Details: [identity-realm.md](../neton-docs/docs/zh-hans/spec/application/identity-realm.md).
 
-### module-payment — Payment System
+### Verification codes (SMS / email)
 
-| Feature | Description |
-|---------|-------------|
-| Payment Apps | Multi-app management, key generation |
-| Payment Channels | Multi-gateway integration, channel configuration |
-| Payment Orders | Order creation, state machine transitions, order query |
-| Refunds | Refund application and processing |
-| Wallet | Account wallet, balance transactions |
-| Top-up | Top-up packages, top-up records |
-| Transfers | Account-to-account transfers |
-| Async Notifications | Payment callback query (webhook endpoint TBD) |
+Configured under `[security.verification]` in `application.conf`:
 
-### module-platform — Open Platform
+| Key | Default | Meaning |
+|-----|---------|---------|
+| `simulate` | `false` | Store codes without sending. **Local development only** |
+| `resend_cooldown_seconds` | `60` | Minimum interval per recipient |
+| `daily_limit_per_recipient` | `10` | Daily cap per recipient |
+| `daily_limit_global` | `0` (unlimited) | Site-wide daily cap per channel. **Set this in production** according to your SMS budget |
 
-| Feature | Description |
-|---------|-------------|
-| Client Management | Third-party client registration, AppID/Secret generation |
-| API Catalog | API definitions, authorization policies, pricing configuration |
-| Signature Verification | HMAC request signing and verification |
-| Billing & Statistics | API call billing, usage statistics, billing records |
+Without a configured SMS/email channel, sending a code returns an error. For local development:
+
+```toml
+[security.verification]
+simulate = true
+```
+
+Login failures are throttled per realm + account + client IP (5 failures → 15-minute cooldown, HTTP 429 with `Retry-After`).
+
+### Admin network allowlist
+
+`[security.network.admin]` / `[security.network.app]` in `application.conf` restrict a route group to IP/CIDR lists (checked before authentication). Disabled by default.
 
 ## Quick Start
 
 ### Prerequisites
 
-- **JDK 17+** (required for Gradle build, not needed at runtime)
-- **Git**
-- **MySQL** (or PostgreSQL / SQLite)
+- **JDK 17+** (build only; not needed at runtime)
+- **PostgreSQL** (the only supported database)
+- **Redis** (default `127.0.0.1:6379`)
+- All sibling repositories checked out as shown above
 
-### 1. Clone the Project
+### 1. Create the database and configure the connection
 
-```bash
-git clone <repository-url>
-cd neton-application
-```
-
-Ensure the Neton framework and extension modules are in sibling directories:
-
-```
-projects/
-├── neton/                              # Framework
-├── neton-application/                  # This project
-├── neton-application-module-member/    # Member module
-├── neton-application-module-payment/   # Payment module
-└── neton-application-module-platform/  # Open platform module
-```
-
-### 2. Initialize the Database
-
-Each repository contains its own `sql/` directory. Execute them sequentially against the **same database**.
-
-#### MySQL
-
-```bash
-# Main DB (system + infra)
-mysql -u root -p neton-application < sql/mysql/V001__create_tables.sql
-mysql -u root -p neton-application < sql/mysql/V002__init_data.sql
-
-# Member module
-mysql -u root -p neton-application < ../neton-application-module-member/sql/mysql/V001__create_tables.sql
-mysql -u root -p neton-application < ../neton-application-module-member/sql/mysql/V002__init_data.sql
-
-# Payment module
-mysql -u root -p neton-application < ../neton-application-module-payment/sql/mysql/V001__create_tables.sql
-mysql -u root -p neton-application < ../neton-application-module-payment/sql/mysql/V002__init_data.sql
-
-# Open platform module
-mysql -u root -p neton-application < ../neton-application-module-platform/sql/mysql/V001__create_tables.sql
-mysql -u root -p neton-application < ../neton-application-module-platform/sql/mysql/V002__init_data.sql
-```
-
-#### PostgreSQL
-
-```bash
-# Main DB (system + infra)
-psql -U postgres -d neton-application -f sql/postgresql/V001__create_tables.sql
-psql -U postgres -d neton-application -f sql/postgresql/V002__init_data.sql
-
-# Member module
-psql -U postgres -d neton-application -f ../neton-application-module-member/sql/postgresql/V001__create_tables.sql
-psql -U postgres -d neton-application -f ../neton-application-module-member/sql/postgresql/V002__init_data.sql
-
-# Payment module
-psql -U postgres -d neton-application -f ../neton-application-module-payment/sql/postgresql/V001__create_tables.sql
-psql -U postgres -d neton-application -f ../neton-application-module-payment/sql/postgresql/V002__init_data.sql
-
-# Open platform module
-psql -U postgres -d neton-application -f ../neton-application-module-platform/sql/postgresql/V001__create_tables.sql
-psql -U postgres -d neton-application -f ../neton-application-module-platform/sql/postgresql/V002__init_data.sql
-```
-
-#### SQLite
-
-```bash
-mkdir -p application/data application/logs
-
-# Main DB (system + infra)
-sqlite3 application/data/backend.db < sql/sqlite/V001__create_tables.sql
-sqlite3 application/data/backend.db < sql/sqlite/V002__init_data.sql
-
-# Member module
-sqlite3 application/data/backend.db < ../neton-application-module-member/sql/sqlite/V001__create_tables.sql
-sqlite3 application/data/backend.db < ../neton-application-module-member/sql/sqlite/V002__init_data.sql
-
-# Payment module
-sqlite3 application/data/backend.db < ../neton-application-module-payment/sql/sqlite/V001__create_tables.sql
-sqlite3 application/data/backend.db < ../neton-application-module-payment/sql/sqlite/V002__init_data.sql
-
-# Open platform module
-sqlite3 application/data/backend.db < ../neton-application-module-platform/sql/sqlite/V001__create_tables.sql
-sqlite3 application/data/backend.db < ../neton-application-module-platform/sql/sqlite/V002__init_data.sql
-```
-
-### 3. Configure Database Connection
-
-Edit `application/config/database.conf` for your database:
+Create an empty PostgreSQL database, then edit `application/config/database.conf` (keep `[database]` in `application.conf` consistent):
 
 ```toml
-# MySQL
 [default]
-driver = "MYSQL"
-uri = "mysql://root:123456@localhost:3306/neton-application"
+driver = "POSTGRESQL"
+uri = "postgresql://user:password@localhost:5432/neton-application"
 
-# PostgreSQL
-# [default]
-# driver = "POSTGRESQL"
-# uri = "postgresql://postgres:123456@localhost:5432/neton-application"
-
-# SQLite
-# [default]
-# driver = "SQLITE"
-# uri = "sqlite://data/backend.db"
+[migration]
+history_table = "neton_schema_history"
 ```
 
-### 4. Build
+Any other driver is rejected by module-system at startup.
+
+### 2. Build
 
 ```bash
-# macOS ARM64 (Apple Silicon)
-./gradlew :application:linkDebugExecutableMacosArm64
-
-# macOS x64
-./gradlew :application:linkDebugExecutableMacosX64
-
-# Linux x64
-./gradlew :application:linkDebugExecutableLinuxX64
-
-# Linux ARM64
-./gradlew :application:linkDebugExecutableLinuxArm64
+./gradlew :application:linkDebugExecutableMacosArm64   # macOS Apple Silicon
+./gradlew :application:linkDebugExecutableLinuxX64     # Linux x64
+./gradlew :application:linkDebugExecutableLinuxArm64   # Linux ARM64
+./gradlew :application:linkDebugExecutableMingwX64     # Windows x64
 ```
 
-> The first build downloads the Kotlin/Native toolchain, which takes longer. Subsequent incremental builds are faster.
+For release builds replace `linkDebugExecutable` with `linkReleaseExecutable`. Output: `application/build/bin/<target>/<debug|release>Executable/application.kexe`.
 
-### 5. Run
+### 3. Run migrations
 
-**Must be launched from the `application` directory** to correctly load configuration:
+Schema creation and upgrades go **only** through the `migrate` command. SQL is compiled into the binary; there is no need (and it is not allowed) to import SQL files with `psql` by hand. Startup never migrates automatically: if migrations are pending, failed or mismatched, startup aborts.
+
+```bash
+cd application
+export NETON_SECURITY__JWT__SECRETKEY="$(openssl rand -base64 48)"
+./build/bin/macosArm64/debugExecutable/application.kexe migrate up
+```
+
+Subcommands: `migrate status` (exits 1 if anything is pending), `migrate up`, `migrate verify`. Applied scripts are checksummed and must not be modified.
+
+### 4. Start
+
+Run from the `application` directory so `config/` is found:
 
 ```bash
 cd application
 ./build/bin/macosArm64/debugExecutable/application.kexe
 ```
 
-Output:
+Listens on `http://0.0.0.0:8080` by default.
 
-```
-░█▀█░█▀▀░▀█▀░█▀█░█▀█
-░█░█░█▀▀░░█░░█░█░█░█
-░▀░▀░▀▀▀░░▀░░▀▀▀░▀░▀░
+Notes:
+- `module-cs` requires `config/privchat.conf` (PrivChat service API URL and master key); startup fails without it. Do not commit real keys.
+- Default admin account (seeded by migrations): `admin` / `admin123`. **Change the password immediately.**
 
-Neton 1.0.0-beta1
-Kotlin/Native Runtime
-
-Adapter     : Ktor CIO
-Environment : dev
-Port        : 8080
-Cold Start  : 154 ms
-
-Ready → http://localhost:8080
-```
-
-### 6. Verify
+### 5. Verify
 
 ```bash
-curl http://localhost:8080/
-# {"status":"ok","service":"neton-application","version":"1.0.0"}
+curl http://localhost:8080/admin/system/health/live    # process is up, touches no dependencies
+curl http://localhost:8080/admin/system/health/ready   # probes PostgreSQL and Redis; 503 if any is unavailable
+```
+
+Both are anonymous. Use `live` for restart policies and `ready` for load balancing. The root path `/` only returns a static `ok` and does not reflect dependency health.
+
+### 6. Frontends
+
+- **Admin console**: `neton-application-front` (React 19 + Next.js) is the official admin frontend; `neton-application-admin` (Vue) is the legacy version during the dual-track period and is being phased out.
+- **End-user console**: `neton-application-client` (React 19 + Next.js), using the `/app` group.
+
+```bash
+cd ../neton-application-front && pnpm install && pnpm dev
 ```
 
 ## Configuration
 
-### application.conf
+Files in `application/config/`:
 
-```toml
-[application]
-name = "neton-application"
-debug = false
+| File | Purpose |
+|------|---------|
+| `application.conf` | Server, JWT, unified token, network allowlist, logging |
+| `database.conf` | PostgreSQL connection and migration history table |
+| `routing.conf` | Route groups |
+| `storage.conf` | File storage backends (local by default; S3 template included) |
+| `privchat.conf` | PrivChat service API used by module-cs |
+| `geolite.conf` | Path to the GeoLite2 City database (obtain under the MaxMind license) |
 
-[server]
-port = 8080
-host = "0.0.0.0"
+Priority: CLI args > environment variables > environment config file > base config file > framework defaults.
+Environment variables use the `NETON_` prefix with `__` as the level separator (e.g. `NETON_SECURITY__JWT__SECRETKEY` → `security.jwt.secretKey`).
 
-[database]
-driver = "MYSQL"
-uri = "mysql://root:123456@localhost:3306/neton-application"
+`./application.kexe --env=prod` loads environment-specific overrides such as `application.prod.conf`.
 
-[logging]
-level = "INFO"
+CORS is configured in `Main.kt` (`http { cors { … } }`) and allows all origins by default for development; tighten it for production.
 
-[logging.async]
-enabled = true
-queueSize = 8192
-flushEveryMs = 200
-flushBatchSize = 64
-shutdownFlushTimeoutMs = 2000
-
-[[logging.sinks]]
-name = "access"
-file = "logs/access.log"
-levels = "INFO"
-route = "http.access"
-
-[[logging.sinks]]
-name = "error"
-file = "logs/error.log"
-levels = "ERROR,WARN"
-
-[[logging.sinks]]
-name = "all"
-file = "logs/all.log"
-levels = "ALL"
-```
-
-### database.conf
-
-```toml
-[default]
-driver = "MYSQL"
-uri = "mysql://root:123456@localhost:3306/neton-application"
-debug = false
-```
-
-### routing.conf
-
-```toml
-[[groups]]
-group = "admin"
-mount = "/admin"
-requireAuth = true
-
-[[groups]]
-group = "app"
-mount = "/app"
-requireAuth = true
-
-[[groups]]
-group = "open"
-mount = "/platform"
-```
-
-### Environment Overrides
-
-Supports loading environment-specific configuration:
+## Testing
 
 ```bash
-# Development (default)
-./application.kexe
-
-# Production → loads application.prod.conf as override
-./application.kexe --env=prod
+# Module unit tests
+./gradlew :module-system:macosArm64Test :module-account:macosArm64Test :module-member:macosArm64Test
 ```
 
-Configuration priority: CLI args > Environment variables > Environment config file > Base config file > Framework defaults
+### Security regression E2E
 
-## Build Targets
+`tests/security/realm-session-e2e.sh` runs the real binary against a real PostgreSQL and an isolated Redis, and asserts: placeholder key refuses to start, realm cross matrix, CSRF, single-use refresh tokens, logout revokes only the current session, password change revokes all sessions, immediate permission revocation, login-failure cooldown, logout-all and login audit.
 
-| Platform | Target | Output Path |
-|----------|--------|-------------|
-| macOS ARM64 | `macosArm64` | `application/build/bin/macosArm64/debugExecutable/` |
-| macOS x64 | `macosX64` | `application/build/bin/macosX64/debugExecutable/` |
-| Linux x64 | `linuxX64` | `application/build/bin/linuxX64/debugExecutable/` |
-| Linux ARM64 | `linuxArm64` | `application/build/bin/linuxArm64/debugExecutable/` |
-| Windows x64 | `mingwX64` | `application/build/bin/mingwX64/debugExecutable/` |
-
-For release builds: replace `linkDebugExecutable` with `linkReleaseExecutable`.
-
-## Container Deployment
-
-```dockerfile
-FROM scratch
-COPY build/bin/linuxX64/releaseExecutable/application.kexe /app
-COPY application/config/ /config/
-EXPOSE 8080
-ENTRYPOINT ["/app", "--env=prod"]
-```
+Requirements: local PostgreSQL (`createdb`/`dropdb`/`psql` on `PATH`, user allowed to create databases), `redis-server` and `redis-cli`, `curl`, `python3`. Build the debug binary first.
 
 ```bash
-# Build image (~10MB)
-docker build -t neton-application .
-docker run -p 8080:8080 neton-application
+./gradlew :application:linkDebugExecutableMacosArm64
+tests/security/realm-session-e2e.sh
 ```
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `APP_BIN` | `application/build/bin/macosArm64/debugExecutable/application.kexe` | Binary under test |
+| `PGHOST` / `PGPORT` / `PGUSER` / `PGPASSWORD` | `localhost` / `5432` / current user / empty | PostgreSQL connection |
+| `E2E_PORT` | `18090` | Application port |
+| `E2E_REDIS_PORT` | `6398` | Port of the temporary Redis |
+
+The script creates a temporary database and Redis instance and removes them on exit.
+
+### CI
+
+`.github/workflows/backend-ci.yml`: checks out locked dependencies, runs module unit tests and links the binary (macOS), runs the security E2E on PostgreSQL 16 + Redis, builds the Linux x64 release binary, and runs the outbox PostgreSQL contract tests.
 
 ## Development Guide
 
-### Adding a New Controller
+### Adding a Controller
 
 ```kotlin
-// module-system/src/commonMain/kotlin/controller/admin/example/ExampleController.kt
+// <module>/src/commonMain/kotlin/controller/admin/example/ExampleController.kt
 package controller.admin.example
-
-import neton.core.annotations.Controller
-import neton.core.annotations.Get
-import neton.core.annotations.Post
-import neton.core.annotations.Permission
 
 @Controller("/example")
 class ExampleController(private val logic: ExampleLogic) {
@@ -469,12 +317,11 @@ class ExampleController(private val logic: ExampleLogic) {
 }
 ```
 
-KSP auto-generates route registration code — no manual route configuration needed.
+KSP generates route registration. The route group is inferred from the package (`controller.admin.*` → `/admin`, `controller.app.*` → `/app`, `controller.manage.*` → `/manage`). Paginated endpoints return `dto.PageResponse<T>`.
 
-### Adding a New Model + Table
+### Adding a Model + Table
 
 ```kotlin
-// model/Example.kt
 @Serializable
 @Table("system_examples")
 data class Example(
@@ -486,34 +333,20 @@ data class Example(
     @UpdatedAt val updatedAt: String? = null
 )
 
-// table/ExampleTable.kt (Facade, add custom methods here)
 object ExampleTable : Table<Example, Long> by ExampleTableImpl
 ```
 
-KSP auto-generates `ExampleTableImpl`, `ExampleMeta`, `ExampleRowMapper`, and 3 other files.
+Schema changes go into a new `sql/postgresql/V*.sql` in the module repository and are applied with `migrate up`.
 
-### Build Commands
+### Build commands
 
 ```bash
-# Compile only (no linking)
-./gradlew :application:compileKotlinMacosArm64
-
-# Compile + link
-./gradlew :application:linkDebugExecutableMacosArm64
-
-# Clean rebuild
+./gradlew :application:compileKotlinMacosArm64          # compile only
+./gradlew :application:linkDebugExecutableMacosArm64    # compile + link
 ./gradlew clean :application:linkDebugExecutableMacosArm64
-
-# Run KSP code generation only
-./gradlew :module-system:kspKotlinMacosArm64
 ```
 
-## Related Documentation
-
-| Document | Description |
-|----------|-------------|
-| **SPEC.md** | Project architecture, API specifications, configuration specs |
-| [Authentication abuse protection](./docs/auth-abuse-protection-spec.md) | Trusted proxy chain, login throttling, SMS quotas, CAPTCHA and MFA rollout specification |
+If you see "Unresolved reference *TableImpl" after changing a model, delete the module's `build/generated/ksp` and `build/kspCaches` and rebuild.
 
 ## License
 
