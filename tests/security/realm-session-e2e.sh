@@ -162,6 +162,20 @@ for i in 1 2 3 4; do envelope POST /app/auth/login "" "{\"mobile\":\"$LOCK_MOBIL
 r=$(envelope POST /app/auth/login "" "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\"}")
 echo "$r" | grep -q "Too many failed attempts" && pass "连续失败 5 次后锁定" || fail "未锁定: $r"
 
+echo "[8] 全端退出与登录审计"
+D1=$(account_login "$MOBILE" | json "['data']['accessToken']")
+D2=$(account_login "$MOBILE" | json "['data']['accessToken']")
+expect "账号全端退出" "$(status POST /app/auth/logout-all "$D1")" "200"
+expect "全端退出后其他设备的会话也失效" "$(status GET /app/member/user/get "$D2")" "401"
+OK_LOGINS=$(q "SELECT count(*) FROM system_login_logs WHERE username = 'admin' AND login_result = 0")
+BAD_LOGINS=$(q "SELECT count(*) FROM system_login_logs WHERE username = 'nobody_here' AND login_result = 1")
+[ "${OK_LOGINS:-0}" -gt 0 ] && pass "登录成功写入审计（$OK_LOGINS 条）" || fail "没有成功登录审计"
+[ "${BAD_LOGINS:-0}" -gt 0 ] && pass "登录失败写入审计（$BAD_LOGINS 条）" || fail "没有失败登录审计"
+A1=$(admin_login admin admin12345 | json "['data']['accessToken']")
+A2=$(admin_login admin admin12345 | json "['data']['accessToken']")
+expect "管理员全端退出" "$(status POST /admin/system/auth/logout-all "$A1")" "200"
+expect "全端退出后其他会话也失效" "$(status GET /admin/system/user/profile/get "$A2")" "401"
+
 echo
 echo "═══ 结果：$PASS passed, $FAIL failed ═══"
 [ "$FAIL" = "0" ]
