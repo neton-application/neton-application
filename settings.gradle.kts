@@ -11,6 +11,8 @@ rootProject.name = "neton-application"
 // 框架依赖（composite build）
 includeBuild("../neton")
 includeBuild("../geolite4k")
+// 套件基础契约（infra / account 实现与使用 contract.core.IpRegionResolver 等端口）
+includeBuild("../neton-application-contract")
 
 // module-cs 经它访问 PrivChat service API（独立库，非 application module）
 includeBuild("../../privchat/privchat-service-client")
