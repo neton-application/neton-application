@@ -44,6 +44,8 @@ envelope() {
 }
 
 export NETON_SECURITY__JWT__SECRETKEY="realm-e2e-only-jwt-secret-0123456789abcdef"
+# 验证码模拟通道只允许在显式声明的开发/测试环境里开启（SecuritySettings.requireSimulationAllowed）。
+export NETON_ENV=test
 export NETON_SECURITY__VERIFICATION__SIMULATE=true
 export NETON_SECURITY__VERIFICATION__RESEND_COOLDOWN_SECONDS=0
 export NETON_REDIS__PORT="$REDIS_PORT"
