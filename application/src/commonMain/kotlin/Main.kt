@@ -44,17 +44,17 @@ fun main(args: Array<String>) {
     Neton.run(args) {
         configRegistry(GeneratedNetonConfigRegistry)
 
-        // 出站 HTTP 客户端：应用创建、应用绑定、应用关闭。system（短信）、payment（支付平台）、
-        // storage、ai 只借用同一个实例，各自按请求给超时。引擎是 neton-http
-        // 内置的（基于 netonstream io），源码里不出现引擎名。
+        // 出站 HTTP 客户端：应用创建、应用绑定、应用关闭。地址写在部署配置里的调用（storage、ai、人机验证）
+        // 借用这一个实例，各自按请求给超时。地址来自用户 / 内容 / 后台运行期数据的（短信与邮件渠道、支付平台网关、
+        // 媒体转存）走受控客户端：module-system 按 application.conf [egress] 绑定 GuardedHttpClientProvider，
+        // 经下面的 provider 建。引擎是 neton-http 内置的（基于 netonstream io），源码里不出现引擎名。
         val outboundHttp = HttpClient.create {
             connectMillis = 3_000
             requestMillis = 15_000
             socketMillis = 15_000
         }
         bind(HttpClient::class, outboundHttp)
-        // 需要按运行时配置建多个客户端的模块（AI 网关：每个上游渠道各自的代理与超时）
-        // 通过这个 provider 建；引擎仍只在本工程的 build 文件里出现。
+        // 需要按运行时配置建客户端的地方（受控客户端、AI 网关的渠道客户端）通过这个 provider 建，模块自己不带引擎。
         bind(HttpClientProvider::class, HttpClientProvider { HttpClient.create(it) })
         onStart {
             get(NetonContext::class).lifecycle.register("outbound-http-client", object : NetonLifecycle {
