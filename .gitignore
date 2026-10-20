@@ -37,3 +37,4 @@ secrets.properties
 
 # Runtime upload storage (user-uploaded files, not source)
 application/storage/
+tests/mfa/storage/
