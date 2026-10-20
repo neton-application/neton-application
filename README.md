@@ -12,6 +12,14 @@ This repository is the **base distribution**: it only assembles modules (applica
 > Engineering rules: [docs/ENGINEERING_RULES.md](./docs/ENGINEERING_RULES.md) ·
 > Module template: [docs/module-template-spec.md](./docs/module-template-spec.md)
 
+## AI-assisted development
+
+Install the [Application development skill from neton-docs](https://github.com/netonframework/netonframework.github.io/tree/main/skills)
+for business modules, forks and paired frontend work. Skills are maintained centrally
+and are not automatically installed by framework dependencies. [AGENTS.md](AGENTS.md)
+and [CLAUDE.md](CLAUDE.md) provide entry points. Project-specific business requirements
+and acceptance tests are still required.
+
 ## Tech Stack
 
 | Component | Choice |
