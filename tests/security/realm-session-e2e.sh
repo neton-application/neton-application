@@ -76,11 +76,14 @@ for _ in $(seq 1 60); do curl -s -o /dev/null "$U/admin/system/site/public" && b
 admin_login() {
   envelope POST /admin/system/auth/login "" "{\"username\":\"$1\",\"password\":\"$2\"}"
 }
+# The account module only accepts a client-generated lowercase UUID v4 device id; one per "install".
+ACCOUNT_DEVICE=$(python3 -c 'import uuid; print(uuid.uuid4())')
+DEVICE_JSON="{\"deviceId\":\"$ACCOUNT_DEVICE\",\"platform\":\"ios\"}"
 account_login() {
   local mobile=$1
   envelope POST /app/auth/send-sms-code "" "{\"mobile\":\"$mobile\",\"scene\":1}" >/dev/null
   local code; code=$(rc get "neton:vc:account:login:sms:$mobile")
-  envelope POST /app/auth/sms-login "" "{\"mobile\":\"$mobile\",\"smsCode\":\"$code\",\"device\":{\"deviceId\":\"e2e-$mobile\",\"platform\":\"ios\"}}"
+  envelope POST /app/auth/sms-login "" "{\"mobile\":\"$mobile\",\"smsCode\":\"$code\",\"device\":$DEVICE_JSON}"
 }
 MOBILE="+8613900099001"
 account_login "$MOBILE" >/dev/null
@@ -102,7 +105,8 @@ expect "账号 refresh 当 access 用 → /app 拒绝" "$(status GET /app/member
 expect "管理员 refresh 当 access 用 → /admin 拒绝" "$(status GET /admin/system/user/profile/get "$A_REF")" "401"
 r=$(envelope POST /admin/system/auth/refresh-token "" "{\"refreshToken\":\"$U_REF\"}")
 expect "账号 refresh 换管理员令牌被拒" "$(echo "$r" | json "['data']['accessToken']")" ""
-r=$(envelope POST /app/auth/refresh-token "" "{\"refreshToken\":\"$A_REF\",\"deviceId\":\"x\"}")
+# well-formed device id, so only the realm differs
+r=$(envelope POST /app/auth/refresh-token "" "{\"refreshToken\":\"$A_REF\",\"deviceId\":\"$ACCOUNT_DEVICE\"}")
 expect "管理员 refresh 换账号令牌被拒" "$(echo "$r" | json "['data']['accessToken']")" ""
 
 echo "[2] CSRF：凭 Cookie 的写请求必须带 X-Neton-Csrf"
@@ -133,7 +137,7 @@ expect "退出后该会话 access 失效" "$(status GET /admin/system/user/profi
 expect "另一个会话不受影响" "$(status GET /admin/system/user/profile/get "$S2")" "200"
 expect "账号退出" "$(status POST /app/auth/logout "$U_ACC")" "200"
 expect "账号退出后 access 失效" "$(status GET /app/member/user/get "$U_ACC")" "401"
-r=$(envelope POST /app/auth/refresh-token "" "{\"refreshToken\":\"$U_REF\",\"deviceId\":\"e2e-$MOBILE\"}")
+r=$(envelope POST /app/auth/refresh-token "" "{\"refreshToken\":\"$U_REF\",\"deviceId\":\"$ACCOUNT_DEVICE\"}")
 expect "账号退出后 refresh 失效" "$(echo "$r" | json "['data']['accessToken']")" ""
 
 echo "[5] 改密作废全部会话"
@@ -157,13 +161,13 @@ expect "新授予的权限同样立即生效" "$(status GET '/admin/system/role/
 
 echo "[7] 按账号的登录失败冷却（管理员登录入口的 IP 限流此时已被前面的步骤用掉，改测账号入口）"
 LOCK_MOBILE="+8613900099002"
-m1=$(envelope POST /app/auth/login "" "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\"}" | json "['message']")
-m2=$(envelope POST /app/auth/login "" "{\"mobile\":\"$MOBILE\",\"password\":\"wrongPassw0rd\"}" | json "['message']")
+m1=$(envelope POST /app/auth/login "" "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\",\"device\":$DEVICE_JSON}" | json "['message']")
+m2=$(envelope POST /app/auth/login "" "{\"mobile\":\"$MOBILE\",\"password\":\"wrongPassw0rd\",\"device\":$DEVICE_JSON}" | json "['message']")
 expect "账号登录：未注册号码与密码错误提示一致" "$m1" "$m2"
-for i in 1 2 3 4; do envelope POST /app/auth/login "" "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\"}" >/dev/null; done
-r=$(envelope POST /app/auth/login "" "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\"}")
+for i in 1 2 3 4; do envelope POST /app/auth/login "" "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\",\"device\":$DEVICE_JSON}" >/dev/null; done
+r=$(envelope POST /app/auth/login "" "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\",\"device\":$DEVICE_JSON}")
 echo "$r" | grep -q "LOGIN_LOCKED" && pass "连续失败 5 次后锁定" || fail "未锁定: $r"
-RA=$(curl -s -D - -o /dev/null -X POST "$U/app/auth/login" -H "$CT" -d "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\"}" | tr -d '\r' | awk -F': ' 'tolower($1)=="retry-after"{print $2}')
+RA=$(curl -s -D - -o /dev/null -X POST "$U/app/auth/login" -H "$CT" -d "{\"mobile\":\"$LOCK_MOBILE\",\"password\":\"wrongPassw0rd\",\"device\":$DEVICE_JSON}" | tr -d '\r' | awk -F': ' 'tolower($1)=="retry-after"{print $2}')
 [ -n "$RA" ] && [ "$RA" -gt 0 ] && pass "冷却响应带 Retry-After（$RA 秒）" || fail "冷却响应缺 Retry-After"
 LOCK_KEYS=$(rc --scan --pattern '*auth:fail:account:*' | tr '\n' ' ')
 [ -n "$LOCK_KEYS" ] && ! echo "$LOCK_KEYS" | grep -q "13900099002" && pass "冷却键不含原始账号（摘要 + IP）" || fail "冷却键异常: $LOCK_KEYS"
@@ -196,11 +200,21 @@ r=$(curl -s -w "\n%{http_code}" -X PUT "$U/app/member/user/update-password" -H "
 expect "空新密码 → 400" "$(echo "$r" | tail -1)" "400"
 expect "空新密码 → newPassword REQUIRED" "$(echo "$r" | sed '$d' | field_code newPassword)" "REQUIRED"
 expect "被拒的改密请求没有改动密码" "$(pw_hash)" "$BEFORE"
-r=$(curl -s -w "\n%{http_code}" -X POST "$U/app/auth/login-username" -H "$CT" -d '{"username":"e2e_user","password":"abc"}')
+r=$(curl -s -w "\n%{http_code}" -X POST "$U/app/auth/login-username" -H "$CT" -d "{\"username\":\"e2e_user\",\"password\":\"abc\",\"device\":$DEVICE_JSON}")
 expect "用户名登录过短密码 → 400" "$(echo "$r" | tail -1)" "400"
 expect "用户名登录过短密码 → password TOO_SHORT" "$(echo "$r" | sed '$d' | field_code password)" "TOO_SHORT"
 expect "合法新密码可以设置" "$(status PUT /app/member/user/update-password "$PW_ACC" '{"newPassword":"newPassw0rd!"}')" "200"
 [ "$(pw_hash)" != "$BEFORE" ] && pass "合法改密写入了新密码" || fail "合法改密没有生效"
+
+echo "[10] 设备标识：只收客户端生成的小写 UUID v4，服务端不代生成"
+DUMMY_REF="0123456789abcdef0123456789abcdef0123456789"
+r=$(envelope POST /app/auth/refresh-token "" "{\"refreshToken\":\"$DUMMY_REF\"}")
+expect "刷新缺 deviceId → DEVICE_ID_REQUIRED" "$(echo "$r" | json "['message']")" "DEVICE_ID_REQUIRED"
+r=$(envelope POST /app/auth/refresh-token "" "{\"refreshToken\":\"$DUMMY_REF\",\"deviceId\":\"e2e-device\"}")
+expect "刷新非 UUID deviceId → INVALID_DEVICE_ID" "$(echo "$r" | json "['message']")" "INVALID_DEVICE_ID"
+UPPER_DEVICE=$(echo "$ACCOUNT_DEVICE" | tr 'a-f' 'A-F')
+r=$(envelope POST /app/auth/refresh-token "" "{\"refreshToken\":\"$DUMMY_REF\",\"deviceId\":\"$UPPER_DEVICE\"}")
+expect "刷新大写 UUID → INVALID_DEVICE_ID（不做规范化）" "$(echo "$r" | json "['message']")" "INVALID_DEVICE_ID"
 
 echo
 echo "═══ 结果：$PASS passed, $FAIL failed ═══"
